@@ -42,8 +42,7 @@ output_dir="./MCMC_results/"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-print([galnumvals,DMprofileList,threads])
-
+print("Running Galaxy Numbers: "+galnumvals+", DM Profiles: "+DMProfileList+" with "+str(threads)+" threads.")
 
 # ## Group observation data DelUps015
 
@@ -723,13 +722,18 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
     #_____Starting points for walkers_____
     #Starting point p0 for each of the walkers:
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
-    #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)]) 
+    #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)])
+    starting_point_start = time.time()
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile)
     print(chainsini)
     np.savetxt(output_dir+'Startingpointswalkers_M200csigmavm_'+filename+'.dat',chainsini, header=str(header))
     print('Startingpointswalkers_M200csigmavm_'+filename+'.dat exported.')
     p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
+    starting_point_end = time.time()
+    spoint_time=starting_point_end-starting_point_start
+    print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
     #_____MCMCs_____
+    parallelstart = time.time()
     for i in range(0,nburnins+1):
         if i==0:
             paramsini=p0    
@@ -753,7 +757,9 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
         #Save results on computer:
         np.savetxt(output_dir+'Chains_M200csigmavm_'+filename+'_'+runname+'.dat',chains, header=str(header))
         print('Chains_M200csigmavm_'+filename+'_'+runname+'.dat exported.')
-    
+    parallel_end = time.time()
+    tparallel=parallel_end - parallelstart
+    print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
     #_____Best fit_____
     imin=list(itertools.chain.from_iterable(np.argwhere(Chi2vals==min(Chi2vals))))
     Chi2=Chi2vals[imin][0]
@@ -766,7 +772,6 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
 
 for galnum in galnumvals:
     for DMprofile in DMprofileList:
-        parallelstart = time.time()
         #_____Number of burn-in runs_____
         nburnins=burnin_val
         #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
@@ -783,9 +788,7 @@ for galnum in galnumvals:
 
         #_____Run MCMCs____
         print(MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun))
-        parallelend = time.time()
-        tparallel=parallelend - parallelstart
-        print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
 end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
+print("Successfully finished running.")
