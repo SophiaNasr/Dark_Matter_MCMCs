@@ -1,5 +1,5 @@
 # coding: utf-8
-
+import os,sys
 import numpy as np
 import pandas as pd #for loading csv Excel files
 import string #for loading files with apostrophe in file name
@@ -14,15 +14,30 @@ import random #to generate integer random numbers
 import itertools #to merge lists
 import time #for printing out timing
 import emcee #for running MCMCs
-from sys import argv
+import argparse
 
 start = time.time()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--groups", help="Groups included in run",nargs="+",type=int,required=True,choices=range(10))
+parser.add_argument("--profiles", help="Profiles included in run",nargs="+",type=str,required=True,choices=['NFW','Bl','Gn'])
+parser.add_argument("--threads", help="set the number of threads. Default is 1 thread.",default=1,type=int)
+parser.add_argument("--burn-ins", help="set number of burn-in runs. Default is 5",default=5,type=int)
+parser.add_argument("--nwalkers", help="set number of walkers. Default is 224.",default=224,type=int)
+parser.add_argument("--burn-in-samples", help="set number of samples for burn-in runs. Default is 50.",default=50,type=int)
+parser.add_argument("--full-run-samples", help="set number of samples for full runs. Default is 500.",default=500,type=int)
 
-galnum=int(argv[1])
-DMprofile=argv[2]
-threads=int(argv[3])
-print([galnum,DMprofile,threads])
+args=parser.parse_args()
+
+galnumvals=args.groups
+DMprofileList=args.profiles
+threads=args.threads
+burnin_val=args.burn_ins
+nwalker_val=args.nwalkers
+burnin_samples=args.burn_in_samples
+full_samples=args.full_run_samples
+
+print([galnumvals,DMprofileList,threads])
 
 
 # ## Group observation data DelUps015
@@ -173,7 +188,7 @@ def ACNFWProfile(DMprofile,galnum,Y,M200,c,r): #DMprofile = NFW, Bl, Gn
     rhoACdm=Mdmprime/(4.*np.pi*r**2.)
     return [rhoACdm,Mavg]  
     
-print(ACNFWProfile(DMprofile,galnum,1.,10.**12.,1.,100.,))
+#print(ACNFWProfile(DMprofile,galnum,1.,10.**12.,1.,100.,))
 
 
 # # ACSIDM profile in terms of [rho0,sigma0,xsctn]
@@ -298,7 +313,7 @@ def ACSIDMProfile(galnum,DMprofile,Y,rho0,sigma0,xsctn):
     sigmavm=sigma0*(4./np.sqrt(np.pi))*xsctn
     return [M200val,cval,r1,sigmavm]
 
-print(ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest))
+#print(ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest))
 
 # # ACSIDM profile in terms of [M200,c,sigmavm]
 
@@ -320,7 +335,7 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
 
-print(IsothermalProfileInt(galnum,5,5.*10.**9.,600.)[0](100.))
+#print(IsothermalProfileInt(galnum,5,5.*10.**9.,600.)[0](100.))
 
 def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     #_____Group properties_____
@@ -400,20 +415,20 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
     return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]    
 
-[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.,600.,0.5]
-[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
-print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
+#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.,600.,0.5]
+#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
+#print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
+#print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
 
-[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
+#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
 
-[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-print([M200test,ctest,sigmavmtest])
+#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
+#print([M200test,ctest,sigmavmtest])
 
-[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
-[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
-print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
+#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
+#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
+#print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
+#print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
 
 def kappabartot(galnum,Y,rhoACSIDMInt):
     #_____Group properties_____ 
@@ -430,7 +445,7 @@ def kappabartot(galnum,Y,rhoACSIDMInt):
     kappatot=kappadm+Y*kappab
     return kappatot
 
-print(kappabartot(galnum,Ytest,ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[1])) #rhoACSIDMInt=ACSIDMProfile(...)[1]
+#print(kappabartot(galnum,Ytest,ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[1])) #rhoACSIDMInt=ACSIDMProfile(...)[1]
 
 # # Binned LOS velocity dispersion
 
@@ -576,8 +591,8 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
     sigmaLOSfull=np.array([sigmaLOS[i] for i in binpositions])
     return sigmaLOSfull
 
-Mtot=ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[0]
-print(sigmaLOS_seeing_binned(galnum,Mtot,betatest))
+#Mtot=ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[0]
+#print(sigmaLOS_seeing_binned(galnum,Mtot,betatest))
 
 ###Very small differences to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
 ###Difference to Sean's code less than 0.1% (1-2% is accuracy of Sean's code).
@@ -623,7 +638,7 @@ def ACSIDMGroupFitProbability(galnum,DMprofile,log10Y,beta,log10M200,log10c,sigm
     output=np.array([ChiSqLensing,ChiSqMass,ChiSqDisp,prob])
     return output
 
-print(ACSIDMGroupFitProbability(galnum,DMprofile,np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest))
+#print(ACSIDMGroupFitProbability(galnum,DMprofile,np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest))
 
 ###Different values for prob in comparison to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
 
@@ -691,27 +706,27 @@ def lnprob(params,galnum,DMprofile):
             lnprob=-ChiSqTot/2.
     return lnprob
 
-testparams=[np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest]
-print(lnprob(testparams,galnum,DMprofile))
+#testparams=[np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest]
+#print(lnprob(testparams,galnum,DMprofile))
 
-testparams=[np.log10(Ytest),betatest,np.log10(10.),np.log10(ctest),sigmavmtest]
-print(lnprob(testparams,galnum,DMprofile))
+#testparams=[np.log10(Ytest),betatest,np.log10(10.),np.log10(ctest),sigmavmtest]
+#print(lnprob(testparams,galnum,DMprofile))
 
 
 # ### Find random initial points for 
-[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
-sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
-[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
-print([M200ini,cini,r1inim,sigmavmini])
+#[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
+#sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
+#[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
+#print([M200ini,cini,r1inim,sigmavmini])
 
-initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-print(lnprob(initialparams,galnum,DMprofile))
+#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
+#print(lnprob(initialparams,galnum,DMprofile))
 
-[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
-sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
-[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
-initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-print(initialparams)
+#[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
+#sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
+#[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
+#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
+#print(initialparams)
 
 initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, 2094.2717341292714]
 
@@ -742,10 +757,10 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile):
     
     return np.array(chainsini)
 
-initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-paramserrors=np.array([0.1,0.3,2.,0.5,50.])
-nwalkers=10
-print(walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile))
+#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
+#paramserrors=np.array([0.1,0.3,2.,0.5,50.])
+#nwalkers=10
+#print(walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile))
 
 
 # ### Module to run MCMCs
@@ -806,30 +821,28 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
 
 print(np.array([[galnumber,names[galnumber]] for galnumber in range(0,len(names))]))
 
-parallelstart = time.time()
+for galnum in galnumvals:
+    for DMprofile in DMprofileList:
+        parallelstart = time.time()
+        #_____Number of burn-in runs_____
+        nburnins=burnin_val
+        #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
+        nwalkers=nwalker_val
+        #_____Chain lengths_____
+        nsamples_burnin = burnin_samples
+        nsamples_finalrun = full_samples
+        #_____Print properties of MCMCs_____
+        burninlength = nwalkers*nsamples_burnin
+        chainlength = nwalkers*nsamples_finalrun
+        print(str(names[galnum])+': ')
+        print('Burn in: nburnins='+str(nburnins)+', burninlength='+str(burninlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_burnin]))
+        print('Final run: chainlength='+str(chainlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_finalrun]))
 
-#_____Number of burn-in runs_____
-nburnins=5
-#_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
-nwalkers=224
-#_____Chain lengths_____
-nsamples_burnin = 50
-nsamples_finalrun = 500
-#_____Print properties of MCMCs_____
-burninlength = nwalkers*nsamples_burnin
-chainlength = nwalkers*nsamples_finalrun
-print(str(names[galnum])+': ')
-print('Burn in: nburnins='+str(nburnins)+', burninlength='+str(burninlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_burnin]))
-print('Final run: chainlength='+str(chainlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_finalrun]))
-
-#_____Run MCMCs____
-print(MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun))
-        
-        
-parallelend = time.time()
-tparallel=parallelend - parallelstart
-print('tparallel='+str(tparallel))
-
+        #_____Run MCMCs____
+        print(MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun))
+        parallelend = time.time()
+        tparallel=parallelend - parallelstart
+        print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
 end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
