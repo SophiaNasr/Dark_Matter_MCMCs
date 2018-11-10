@@ -42,7 +42,7 @@ output_dir="./MCMC_results/"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-print("Running Galaxy Numbers: "+galnumvals+", DM Profiles: "+DMProfileList+" with "+str(threads)+" threads.")
+print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+" with "+str(threads)+" threads.")
 
 # ## Group observation data DelUps015
 
