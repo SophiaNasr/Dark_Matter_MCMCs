@@ -37,6 +37,11 @@ nwalker_val=args.nwalkers
 burnin_samples=args.burn_in_samples
 full_samples=args.full_run_samples
 
+output_dir="./MCMC_results/"
+
+if not os.path.isdir(output_dir):
+    os.makedirs(output_dir)
+
 print([galnumvals,DMprofileList,threads])
 
 
@@ -415,21 +420,6 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
     return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]    
 
-#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.,600.,0.5]
-#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-#print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
-#print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
-
-#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
-
-#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-#print([M200test,ctest,sigmavmtest])
-
-#[Ytest,rho0test,sigma0test,sigmamtest]=[5.,10**8.5,500,0.5]
-#[M200test,ctest,r1test,sigmavmtest]=ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest)
-#print([np.log10(rho0test),np.log10(sigma0test),r1test,sigmavmtest,sigmamtest])
-#print([ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[i] for i in [-5,-4,-3,-2,-1]])
-
 def kappabartot(galnum,Y,rhoACSIDMInt):
     #_____Group properties_____ 
     RE=REvals[galnum] #Einstein radius in kpc
@@ -445,7 +435,6 @@ def kappabartot(galnum,Y,rhoACSIDMInt):
     kappatot=kappadm+Y*kappab
     return kappatot
 
-#print(kappabartot(galnum,Ytest,ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[1])) #rhoACSIDMInt=ACSIDMProfile(...)[1]
 
 # # Binned LOS velocity dispersion
 
@@ -486,8 +475,6 @@ def fbeta(beta,w):
             +(sp.gamma(beta-(1./2.))*np.sqrt(np.pi)*(3.-2.*beta))/(2.*sp.gamma(beta)))  #sp.gamma(z)=Gamma function \Gamma(z) 
     return f
 
-print(fbeta(0.1,0.5))
-
 alphavals=np.arange(-25.,25.,.1)
 wvals=1./(np.exp(alphavals)+1)
 print(len(wvals))
@@ -505,7 +492,6 @@ def f_beta(beta):
     f_betaInt=interp1d(wvals,f_betavals, kind='cubic')
     return f_betaInt
 
-print(f_beta(0.1)(0.5))
 
 def Sigmastars_sigmaLOS2(galnum,MtotInt,beta):
     rhostars=rhoSersicNoGradInt[galnum]
@@ -521,9 +507,6 @@ def Sigmastars_sigmaLOS2(galnum,MtotInt,beta):
     Int=np.array(list(np.float_([integral(i) for i in range(0,len(r))])))
     Inttab=np.array([[R[i],Int[i]] for i in range(0,len(R)-1)])
     return Inttab
-
-Mtot=MSersicGradInt[0]
-SigmastarssigmaLOS2=Sigmastars_sigmaLOS2(0,Mtot,0.1)
 
 # ### Seeing and binning
 
@@ -577,9 +560,6 @@ def SeeingBinned(galnum,func):
     output=np.array([Seeing_bin(binnum) for binnum in range(0,len(bins))])
     return output
 
-Sigmastars_seeing_binned0=SeeingBinned(0,Sigmastars(0))
-print(Sigmastars_seeing_binned0)
-
 Sigmastars_seeing_binned_vals=np.array([SeeingBinned(galnumber,Sigmastars(galnumber)) for galnumber in range(0,len(names))])
 print(Sigmastars_seeing_binned_vals)
 
@@ -590,9 +570,6 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
     sigmaLOS=np.sqrt(Sigmastars_sigmaLOS2_seeing_binned/Sigmastars_seeing_binned)
     sigmaLOSfull=np.array([sigmaLOS[i] for i in binpositions])
     return sigmaLOSfull
-
-#Mtot=ACSIDMProfileM200csigmavm(galnum,DMprofile,Ytest,M200test,ctest,sigmavmtest)[0]
-#print(sigmaLOS_seeing_binned(galnum,Mtot,betatest))
 
 ###Very small differences to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
 ###Difference to Sean's code less than 0.1% (1-2% is accuracy of Sean's code).
@@ -637,8 +614,6 @@ def ACSIDMGroupFitProbability(galnum,DMprofile,log10Y,beta,log10M200,log10c,sigm
     prob=np.exp(-ChiSqTot/2.)
     output=np.array([ChiSqLensing,ChiSqMass,ChiSqDisp,prob])
     return output
-
-#print(ACSIDMGroupFitProbability(galnum,DMprofile,np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest))
 
 ###Different values for prob in comparison to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
 
@@ -706,30 +681,6 @@ def lnprob(params,galnum,DMprofile):
             lnprob=-ChiSqTot/2.
     return lnprob
 
-#testparams=[np.log10(Ytest),betatest,np.log10(M200test),np.log10(ctest),sigmavmtest]
-#print(lnprob(testparams,galnum,DMprofile))
-
-#testparams=[np.log10(Ytest),betatest,np.log10(10.),np.log10(ctest),sigmavmtest]
-#print(lnprob(testparams,galnum,DMprofile))
-
-
-# ### Find random initial points for 
-#[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
-#sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
-#[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
-#print([M200ini,cini,r1inim,sigmavmini])
-
-#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-#print(lnprob(initialparams,galnum,DMprofile))
-
-#[Yini,betaini,rho0ini,sigma0ini,xsctnini]=[2.1,0.,10**7.3,580.,1.6]
-#sigmavmini=sigma0ini*(4./np.sqrt(np.pi))*xsctnini
-#[M200ini,cini,r1inim,sigmavmini]=ACSIDMProfile(galnum,DMprofile,Yini,rho0ini,sigma0ini,xsctnini)
-#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-#print(initialparams)
-
-initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, 2094.2717341292714]
-
 def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile):
     print('Determine starting points for walkers:')
     #_____Starting points for walkers_____
@@ -757,12 +708,6 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile):
     
     return np.array(chainsini)
 
-#initialparams=[np.log10(Yini),betaini,np.log10(M200ini),np.log10(cini),sigmavmini]
-#paramserrors=np.array([0.1,0.3,2.,0.5,50.])
-#nwalkers=10
-#print(walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile))
-
-
 # ### Module to run MCMCs
 
 def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun): #nwalkers should be > 100.
@@ -781,7 +726,7 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
     #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)]) 
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile)
     print(chainsini)
-    np.savetxt('MCMC_results/Startingpointswalkers_M200csigmavm_'+filename+'.dat',chainsini, header=str(header))
+    np.savetxt(output_dir+'Startingpointswalkers_M200csigmavm_'+filename+'.dat',chainsini, header=str(header))
     print('Startingpointswalkers_M200csigmavm_'+filename+'.dat exported.')
     p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
     #_____MCMCs_____
@@ -806,7 +751,7 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
         chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],params[j][4],Chi2vals[j]] 
                          for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt('MCMC_results/Chains_M200csigmavm_'+filename+'_'+runname+'.dat',chains, header=str(header))
+        np.savetxt(output_dir+'Chains_M200csigmavm_'+filename+'_'+runname+'.dat',chains, header=str(header))
         print('Chains_M200csigmavm_'+filename+'_'+runname+'.dat exported.')
     
     #_____Best fit_____
@@ -816,10 +761,8 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
     print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10M200,log10c,sigmavm]='+str(bestfitparams))
     bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
     #Save results:
-    np.savetxt('MCMC_results/Bestfitparams_M200csigmavm_'+filename+'_'+runname+'.dat',bestfit)
+    np.savetxt(output_dir+'Bestfitparams_M200csigmavm_'+filename+'_'+runname+'.dat',bestfit)
     return 'Done.'  
-
-print(np.array([[galnumber,names[galnumber]] for galnumber in range(0,len(names))]))
 
 for galnum in galnumvals:
     for DMprofile in DMprofileList:
@@ -846,4 +789,3 @@ for galnum in galnumvals:
 end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
-
