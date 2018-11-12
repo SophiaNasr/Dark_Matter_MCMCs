@@ -305,21 +305,15 @@ def ACSIDMProfile(galnum,DMprofile,Y,rho0,sigma0,xsctn):
     
     try:
         rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200val,cval,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         MtotInt=interp1d(Rvals,[MACSIDM(M200val,cval,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         #ACSIDM solution fails, SIDM solution taken instead and dummy variables for [M200,c] split out
         [r1,M200val,cval]=[100.,1.,10.**12.]
         rhoACSIDMInt=interp1d(Rvals,[rhoiso(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         MtotInt=interp1d(Rvals,[Miso(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         
     sigmavm=sigma0*(4./np.sqrt(np.pi))*xsctn
-    #return [M200val,cval,r1,sigmavm]
     return [MtotInt,rhoACSIDMInt,np.log10(M200val),np.log10(cval),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]
-
-
-#print(ACSIDMProfile(galnum,DMprofile,Ytest,rho0test,sigma0test,sigmamtest))
 
 # # ACSIDM profile in terms of [rho0,sigma0,sigmavm]
 
@@ -327,7 +321,6 @@ def ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
     xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
     #_____Group properties_____
     z = zvals[galnum]
-    #Y = NewYvals[galnum]
     def Mb(R):
         return Y*MSersicGradInt[galnum](R)
     
@@ -362,7 +355,6 @@ def ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
     if xsctnmin < xsctn < xsctnmax:
         #_____ACSIDM profile_____
         try:
-            #r1=r/.FindRoot[rho0iso[r]*MSun_in_g*sigma0*km_in_kpc*(4./np.sqrt(np.pi))*xsctn*kpcovercm**2*tage==1,{r,1}];
             def Findr1(R):
                 return rhoiso(R)-1./(MSun_in_g*sigma0*km_in_kpc*(4./np.sqrt(np.pi))*xsctn*cm_in_kpc**2.*tage)
             r1 = opt.brentq(Findr1,Rmin,Rmax,maxiter=150)
@@ -379,7 +371,6 @@ def ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
                 rsstart = r1/x1
                 def Findcstart(c):
                     return rhosstart - (200.*rhocrit(z)*c**3.)/(3.*(np.log(1.+c)-c/(1.+c)))
-                #cstart = opt.brentq(Findcstart,10.**-15.,10.**15.,maxiter=150)
                 cstart = opt.brentq(Findcstart,10.**-10.,10.**10.,maxiter=150)
                 M200start = (4.*np.pi)/3.*200.*rhocrit(z)*cstart**3.*rsstart**3
                 #If[M200start<10^10,M200start=10^13]; Start value for M200 in LogMIntrhoInttab is 10^10.
@@ -410,17 +401,13 @@ def ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
     
     try:
         rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200val,cval,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         MtotInt=interp1d(Rvals,[MACSIDM(M200val,cval,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         #ACSIDM solution fails, SIDM solution taken instead and dummy variables for [M200,c] split out
         [r1,M200val,cval]=[100.,1.,10.**12.]
         rhoACSIDMInt=interp1d(Rvals,[rhoiso(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         MtotInt=interp1d(Rvals,[Miso(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         
-    #sigmavm=sigma0*(4./np.sqrt(np.pi))*xsctn
-    #return [M200val,cval,r1,sigmavm]
     return [MtotInt,rhoACSIDMInt,np.log10(M200val),np.log10(cval),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]   
 
 def kappabartot(galnum,Y,rhoACSIDMInt):
@@ -585,7 +572,6 @@ def ACSIDMGroupFitProbability(galnum,DMprofile,log10Y,beta,log10rho0,log10sigma0
     Y=10.**log10Y
     rho0=10.**log10rho0
     sigma0=10.**log10sigma0
-    #xsctn=10.**log10xsctn
     #_____Group properties_____ 
     z = zvals[galnum]
     kappabarobs=kappabarobsvals[galnum]
@@ -656,8 +642,6 @@ def lnprob(params,galnum,DMprofile):
         [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn]=ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm)
         if log10M200 == 12. and log10c==0.:
             lnprob = -np.inf
-        #elif xsctn < 0.:
-        #    lnprob = -np.inf
         elif xsctn > 10.:
             lnprob = -np.inf
         elif log10c > np.log10(20.): #0 <= c <= 20. equivalemt to log10c > np.log10(20.)

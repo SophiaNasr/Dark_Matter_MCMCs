@@ -600,7 +600,7 @@ def ACSIDMGroupFitProbability(galnum,DMprofile,log10Y,beta,log10M200,log10c,sigm
     a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
     b=-0.101+0.026*z
     log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-    log10cerror=0.1 #error estimate
+    log10cerror=0.15 #error estimate
     ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
     #_____\chi^2 velocity dispersion_____
     sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
