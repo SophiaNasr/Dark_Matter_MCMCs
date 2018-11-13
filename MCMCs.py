@@ -353,26 +353,7 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     def MACNFW(M200,c,R):
         return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1]
     [rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
-    
-    #_____Isothermal profile_____
-    def rhoiso(rho0,sigma0,R):
-        return IsothermalProfileInt(galnum,Y,rho0,sigma0)[0](R)
-    def Miso(rho0,sigma0,R):
-        return IsothermalProfileInt(galnum,Y,rho0,sigma0)[1](R)
-    
-    def rhoACSIDM(M200,c,rho0,sigma0,r1,R):
-        if R > r1:
-            rhodm = rhoACNFW(M200,c,R)
-        else: 
-            rhodm = rhoiso(rho0,sigma0,R)
-        return rhodm 
-    def MACSIDM(M200,c,rho0,sigma0,r1,R):
-        if R > r1:
-            Mdm = MACNFW(M200,c,R)
-        else: 
-            Mdm = Miso(rho0,sigma0,R)
-        return Mdm
-    
+
     #_____Isothermal profile_____
     def Findr1(R):
         return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
@@ -385,16 +366,18 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     if ratio > 0.5:
         def Findrho0sigma0(rho0sigma0):
             [rho0,sigma0] = rho0sigma0
-            rho1=rhoiso(rho0,sigma0,r1)
-            M1=Miso(rho0,sigma0,r1)
+            sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
+            [rho1,M1]=[sol[0](r1),sol[1](r1)]
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW(M200,c,r1) - rho1
             return [equation1,equation2]
         [rho0start,sigma0start]=[10.**7.5,580.]
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
+        sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
+        [rho1,M1]=[sol[0](r1),sol[1](r1)]
         #_____Matching success tests_____
-        MatchingSuccessTestrho = abs((rhoiso(rho0,sigma0,r1)-rhoACNFW(M200,c,r1))/rhoiso(rho0,sigma0,r1))
-        MatchingSuccessTestM = abs((Miso(rho0,sigma0,r1)-MACNFW(M200,c,r1))/Miso(rho0,sigma0,r1))
+        MatchingSuccessTestrho = abs((rho1-rhoACNFW(M200,c,r1))/rho1)
+        MatchingSuccessTestM = abs((M1-MACNFW(M200,c,r1))/M1)
         #if MatchingSuccessTest <=0.01: Matching success test passed.
         if MatchingSuccessTestrho <=0.01 and MatchingSuccessTestM <=0.01:
             if r1 < r200(z,M200,c):
@@ -406,18 +389,31 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
     else:
         [rho0,sigma0,sigmavm]=[10**8.,600.,50.]
     try:
-        rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200,c,rho0,sigma0,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
-        MtotInt=interp1d(Rvals,[MACSIDM(M200,c,rho0,sigma0,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+        def rhoACSIDM(R):
+            if R > r1:
+                rhodm = rhoACNFW(M200,c,R)
+            else: 
+                #rhodm = rhoiso(rho0,sigma0,R)
+                rhodm = sol[0](R)
+            return rhodm 
+        def MACSIDM(R):
+            if R > r1:
+                Mdm = MACNFW(M200,c,R)
+            else: 
+                #Mdm = Miso(rho0,sigma0,R)
+                Mdm = sol[1](R)
+            return Mdm
+        rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+        MtotInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         ##ACSIDM solution fails, ACNFW solution taken instead and dummy variables for [rho0,sigma0,sigmavm] split out
         [rho0,sigma0,sigmavm]=[10**8.,600.,50.]
         rhoACSIDMInt=interp1d(Rvals,[rhoACNFW(M200,c,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         MtotInt=interp1d(Rvals,[MACNFW(M200,c,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     
     xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
     return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]    
+
 
 def kappabartot(galnum,Y,rhoACSIDMInt):
     #_____Group properties_____ 
