@@ -37,6 +37,8 @@ nwalker_val=args.nwalkers
 burnin_samples=args.burn_in_samples
 full_samples=args.full_run_samples
 
+parameter_space='M200csigmavm'
+
 output_dir="./MCMC_results/"
 
 if not os.path.isdir(output_dir):
@@ -722,8 +724,8 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
     starting_point_start = time.time()
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile)
     print(chainsini)
-    np.savetxt(output_dir+'Startingpointswalkers_M200csigmavm_'+filename+'.dat',chainsini, header=str(header))
-    print('Startingpointswalkers_M200csigmavm_'+filename+'.dat exported.')
+    np.savetxt(output_dir+'Startingpointswalkers_'+parameter_space+'_'+filename+'.dat',chainsini, header=str(header))
+    print('Startingpointswalkers_'+parameter_space+'_'+filename+'.dat exported.')
     p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
@@ -751,8 +753,8 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
         chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],params[j][4],Chi2vals[j]] 
                          for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_M200csigmavm_'+filename+'_'+runname+'.dat',chains, header=str(header))
-        print('Chains_M200csigmavm_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
+        print('Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
@@ -763,7 +765,7 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
     print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10M200,log10c,sigmavm]='+str(bestfitparams))
     bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
     #Save results:
-    np.savetxt(output_dir+'Bestfitparams_M200csigmavm_'+filename+'_'+runname+'.dat',bestfit)
+    np.savetxt(output_dir+'Bestfitparams_'+parameter_space+'_'+filename+'_'+runname+'.dat',bestfit)
     return 'Done.'  
 
 for galnum in galnumvals:
