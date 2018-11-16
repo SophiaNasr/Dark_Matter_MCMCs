@@ -295,22 +295,22 @@ def ACSIDMProfile(galnum,DMprofile,Y,rho0,sigma0,xsctn):
                     if r1 < r200(z,M200val,cval):
                         [r1,M200val,cval]=[r1,M200val,cval]
                     else:
-                        [r1,M200val,cval]=[100.,1.,10.**12.]
+                        [r1,M200val,cval]=[100.,10.**12.,1.]
                 else:
-                    [r1,M200val,cval]=[100.,1.,10.**12.]
+                    [r1,M200val,cval]=[100.,10.**12.,1.]
             else:
-                [r1,M200val,cval]=[100.,1.,10.**12.] 
+                [r1,M200val,cval]=[100.,10.**12.,1.] 
         except:
-            [r1,M200val,cval]=[100.,1.,10.**12.] #If an error occurs,e.g. in the numerical root finding, output are dummy variables.                           
+            [r1,M200val,cval]=[100.,10.**12.,1.] #If an error occurs,e.g. in the numerical root finding, output are dummy variables.                           
     else:
-        [r1,M200val,cval]=[100.,1.,10.**12.]     
+        [r1,M200val,cval]=[100.,10.**12.,1.]     
     
     try:
         rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200val,cval,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[MACSIDM(M200val,cval,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         #ACSIDM solution fails, SIDM solution taken instead and dummy variables for [M200,c] split out
-        [r1,M200val,cval]=[100.,1.,10.**12.]
+        [r1,M200val,cval]=[100.,10.**12.,1.]
         rhoACSIDMInt=interp1d(Rvals,[rhoiso(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[Miso(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         
@@ -391,22 +391,22 @@ def ACSIDMProfilesigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
                     if r1 < r200(z,M200val,cval):
                         [r1,M200val,cval]=[r1,M200val,cval]
                     else:
-                        [r1,M200val,cval]=[100.,1.,10.**12.]
+                        [r1,M200val,cval]=[100.,10.**12.,1.]
                 else:
-                    [r1,M200val,cval]=[100.,1.,10.**12.]
+                    [r1,M200val,cval]=[100.,10.**12.,1.]
             else:
-                [r1,M200val,cval]=[100.,1.,10.**12.] 
+                [r1,M200val,cval]=[100.,10.**12.,1.] 
         except:
-            [r1,M200val,cval]=[100.,1.,10.**12.] #If an error occurs,e.g. in the numerical root finding, output are dummy variables.                           
+            [r1,M200val,cval]=[100.,10.**12.,1.] #If an error occurs,e.g. in the numerical root finding, output are dummy variables.                           
     else:
-        [r1,M200val,cval]=[100.,1.,10.**12.]     
+        [r1,M200val,cval]=[100.,10.**12.,1.]     
     
     try:
         rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200val,cval,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[MACSIDM(M200val,cval,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         #ACSIDM solution fails, SIDM solution taken instead and dummy variables for [M200,c] split out
-        [r1,M200val,cval]=[100.,1.,10.**12.]
+        [r1,M200val,cval]=[100.,10.**12.,1.]
         rhoACSIDMInt=interp1d(Rvals,[rhoiso(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[Miso(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         
