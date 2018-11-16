@@ -709,7 +709,7 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile):
 
 def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun): #nwalkers should be > 100.
     #_____MCMC properties_____
-    header=['log10Y', 'beta', 'log10M200', 'log10c', 'sigmavm', 'Chi2']
+    header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
     chainlength = nwalkers*nsamples_finalrun
     filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
     #_____Set up the MCMC_____
@@ -750,7 +750,10 @@ def MCMCNewM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamp
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
         Chi2vals =-2.*lnprobvals
-        chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],params[j][4],Chi2vals[j]] 
+        all_params=[]
+        for j in range(len(params)):
+            all_params.append(ACSIDMProfileM200csigmavm(galnum,DMprofile,10**params[j][0],10**params[j][2],10**params[j][3],params[j][4]))
+        chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],all_params[j][4],all_params[j][5],all_params[j][6],params[j][4],all_params[j][8],Chi2vals[j]] 
                          for j in range(0,len(params))])
         #Save results on computer:
         np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
