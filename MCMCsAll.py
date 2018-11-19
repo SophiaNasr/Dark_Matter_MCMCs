@@ -831,36 +831,33 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
     print('Determine starting points for walkers:')
     #_____Starting points for walkers_____
     j=0
-    jmax=20*nwalkers
-    while j < jmax:
-        if j==0:
+    initpoint=True
+    chainsini=[]
+    while j < nwalkers:
+        if initpoint:
+            initpoint=False
             params = initialparams
             if parspace=='M200csigmavm':
                 lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)
             elif parspace=='rho0sigma0sigmavm':
                 lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
-            if lnprobval==-np.inf:
-                chainsini=[list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]]))]
+            if lnprobval==-np.inf or np.isnan(lnprobval):
+                continue
             else:
-                chainsini=[]
-            #chainsini = [list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]]))]
-            j+= 1
+                chainsini.append([list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]]))])
+            j=len(chainsini)
         else:
             params=initialparams+paramserrors*np.random.randn(len(initialparams))
             if parspace=='M200csigmavm':
                 lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)
             elif parspace=='rho0sigma0sigmavm':
                 lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
-            if lnprobval==-np.inf:
+            if lnprobval==-np.inf or np.isnan(lnprobval):
                 chainsini=chainsini
             else:
                 output = np.array(list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]])))
-                chainsini.append(output)
-            
-            if len(chainsini)==nwalkers:
-                j=jmax+1
-            else:
-                j+= 1
+                chainsini.append(output)    
+        j=len(chainsini)
     
     return np.array(chainsini)
 
