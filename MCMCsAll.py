@@ -844,7 +844,7 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
             if lnprobval==-np.inf or np.isnan(lnprobval):
                 continue
             else:
-                chainsini.append([list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]]))])
+                chainsini.append(list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]])))
             j=len(chainsini)
         else:
             params=initialparams+paramserrors*np.random.randn(len(initialparams))
@@ -881,8 +881,8 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     starting_point_start = time.time()
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace)
     print(chainsini)
-    np.savetxt(output_dir+'Startingpointswalkers_'+parspace+'_'+filename+'.dat',chainsini, header=str(header))
-    print('Startingpointswalkers_'+parspace+'_'+filename+'.dat exported.')
+    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
+    print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
     p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
@@ -913,8 +913,8 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
         chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],all_params[j][4],all_params[j][5],all_params[j][6],params[j][4],all_params[j][8],Chi2vals[j]] 
                          for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_'+parspace+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
-        print('Chains_'+parspace+'_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+'Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
+        print('Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
@@ -925,7 +925,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10M200,log10c,sigmavm]='+str(bestfitparams))
     bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
     #Save results:
-    np.savetxt(output_dir+'Bestfitparams_'+parspace+'_'+filename+'_'+runname+'.dat',bestfit)
+    np.savetxt(output_dir+'Bestfitparams_'+str(parspace)+'_'+filename+'_'+runname+'.dat',bestfit)
     return 'Done.'
 
 
@@ -946,8 +946,8 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     starting_point_start = time.time()
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace)
     print(chainsini)
-    np.savetxt(output_dir+'Startingpointswalkers_'+parspace+'_'+filename+'.dat',chainsini, header=str(header))
-    print('Startingpointswalkers_'+parspace+'_'+filename+'.dat exported.')
+    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
+    print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
     p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
@@ -978,8 +978,8 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
         chains=np.array([[params[j][0],params[j][1],all_params[j][2],all_params[j][3],params[j][2],params[j][3],all_params[j][6],params[j][4],all_params[j][8],Chi2vals[j]] 
                          for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_'+parspace+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
-        print('Chains_'+parspace+'_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+'Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
+        print('Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
@@ -990,13 +990,14 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10rho0,log10sigma0,sigmavm]='+str(bestfitparams))
     bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
     #Save results:
-    np.savetxt(output_dir+'Bestfitparams_'+parspace+'_'+filename+'_'+runname+'.dat',bestfit)
+    np.savetxt(output_dir+'Bestfitparams_'+str(parspace)+'_'+filename+'_'+runname+'.dat',bestfit)
     return 'Done.'  
 
 
 for parameter_space in parameterspaceList:
     for galnum in galnumvals:
         for DMprofile in DMprofileList:
+            print(type(parameter_space))
             #_____Number of burn-in runs_____
             nburnins=burnin_val
             #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
