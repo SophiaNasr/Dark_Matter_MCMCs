@@ -910,10 +910,9 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state, blobs = sampler.run_mcmc(paramsini,nsamples) 
-        #paramsini, lnprobvals, state, blobs: different data typex, cannot be combined in one array
+        paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
         #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-        blobs=np.array(blobs)
+        blobs=sampler.get_blobs(flat=True)
         accfrac=np.mean(sampler.acceptance_fraction)
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
@@ -969,10 +968,9 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state, blobs = sampler.run_mcmc(paramsini,nsamples) 
-        #paramsini, lnprobvals, state, blobs: different data typex, cannot be combined in one array
+        paramsini, lnprobvals, state, blobs = sampler.run_mcmc(paramsini,nsamples)
         #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-        blobs=np.array(blobs)
+        blobs=sampler.get_blobs(flat=True)
         accfrac=np.mean(sampler.acceptance_fraction)
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
@@ -995,7 +993,6 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
 for parameter_space in parameterspaceList:
     for galnum in galnumvals:
         for DMprofile in DMprofileList:
-            print(type(parameter_space))
             #_____Number of burn-in runs_____
             nburnins=burnin_val
             #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
