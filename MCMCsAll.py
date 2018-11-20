@@ -65,8 +65,10 @@ km_in_kpc = 1./(3.0857*10.**16.) #kpc=3.0857*10^16 km
 cm_in_kpc = km_in_kpc/(10.**3.*10**2.)
 
 #_____Dummy variables_____
+#[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot]
 [r1dummy,M200dummy,cdummy]=[100.,10.**12.,1.]
-[rho0dummy,sigma0dummy,sigmavmdummy]=[10**8.,600.,50.]
+[rho0dummy,sigma0dummy,sigmavmdummy,xsctndummy]=[10**8.,600.,50.,1.]
+[Ydummy,betadummy,ChiSqTotdummy]=[1.,0.,np.inf]
 
 
 # # Load data
@@ -768,7 +770,12 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
             ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
             prob=np.exp(-ChiSqTot/2.)
             lnprob=-ChiSqTot/2.
-    return lnprob
+    #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    if lnprob == -np.inf:
+        blobs=[np.log10(Ydummy),betadummy,np.log10(M200dummy),np.log10(cdummy),np.log10(rho0dummy),np.log10(sigma0dummy),r1dummy,sigmavmdummy,xsctndummy,ChiSqTotdummy]
+    else:
+        blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot]
+    return lnprob, blobs
 
 def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     [log10Y,beta,log10rho0,log10sigma0,sigmavm]=params 
@@ -823,7 +830,12 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
             ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
             prob=np.exp(-ChiSqTot/2.)
             lnprob=-ChiSqTot/2.
-    return lnprob
+    #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    if lnprob == -np.inf:
+        blobs=[np.log10(Ydummy),betadummy,np.log10(M200dummy),np.log10(cdummy),np.log10(rho0dummy),np.log10(sigma0dummy),r1dummy,sigmavmdummy,xsctndummy,ChiSqTotdummy]
+    else:
+        blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot]
+    return lnprob, blobs
 
 # ## Find random initial points for walkers
 
@@ -838,9 +850,9 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
             initpoint=False
             params = initialparams
             if parspace=='M200csigmavm':
-                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)
+                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)[0]
             elif parspace=='rho0sigma0sigmavm':
-                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
+                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)[0]
             if lnprobval==-np.inf or np.isnan(lnprobval):
                 continue
             else:
@@ -849,9 +861,9 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
         else:
             params=initialparams+paramserrors*np.random.randn(len(initialparams))
             if parspace=='M200csigmavm':
-                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)
+                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)[0]
             elif parspace=='rho0sigma0sigmavm':
-                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
+                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)[0]
             if lnprobval==-np.inf or np.isnan(lnprobval):
                 chainsini=chainsini
             else:
@@ -899,33 +911,27 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state = sampler.run_mcmc(paramsini,nsamples)
-    
-        params = sampler.flatchain
-        lnprobvals = sampler.flatlnprobability
+        paramsini, lnprobvals, state, blobs = sampler.run_mcmc(paramsini,nsamples) 
+        #paramsini, lnprobvals, state, blobs: different data typex, cannot be combined in one array
+        #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+        blobs=np.array(blobs)
         accfrac=np.mean(sampler.acceptance_fraction)
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
-        Chi2vals =-2.*lnprobvals
-        all_params=[]
-        for j in range(len(params)):
-            all_params.append(ACSIDMProfileM200csigmavm(galnum,DMprofile,10**params[j][0],10**params[j][2],10**params[j][3],params[j][4]))
-        chains=np.array([[params[j][0],params[j][1],params[j][2],params[j][3],all_params[j][4],all_params[j][5],all_params[j][6],params[j][4],all_params[j][8],Chi2vals[j]] 
-                         for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
-        print('Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header))
+        print('Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
     #_____Best fit_____
+    Chi2vals=blobs[:,-1]
     imin=list(itertools.chain.from_iterable(np.argwhere(Chi2vals==min(Chi2vals))))
-    Chi2=Chi2vals[imin][0]
-    bestfitparams=params[imin][0]
-    print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10M200,log10c,sigmavm]='+str(bestfitparams))
-    bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
+    bestfit=blobs[imin][0]
+    print('Best fit: '+str(header)+'='+str(bestfit))
     #Save results:
-    np.savetxt(output_dir+'Bestfitparams_'+str(parspace)+'_'+filename+'_'+runname+'.dat',bestfit)
+    np.savetxt(output_dir+'Bestfitparams_'+parameter_space+'_'+filename+'_'+runname+'.dat',bestfit)
+    print('Bestfitparams_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
     return 'Done.'
 
 
@@ -964,35 +970,28 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state = sampler.run_mcmc(paramsini,nsamples)
-    
-        params = sampler.flatchain
-        lnprobvals = sampler.flatlnprobability
+        paramsini, lnprobvals, state, blobs = sampler.run_mcmc(paramsini,nsamples) 
+        #paramsini, lnprobvals, state, blobs: different data typex, cannot be combined in one array
+        #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+        blobs=np.array(blobs)
         accfrac=np.mean(sampler.acceptance_fraction)
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
-        Chi2vals =-2.*lnprobvals
-        all_params=[]
-        for j in range(len(params)):
-            all_params.append(ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,10**params[j][0],10**params[j][2],10**params[j][3],params[j][4]))
-        chains=np.array([[params[j][0],params[j][1],all_params[j][2],all_params[j][3],params[j][2],params[j][3],all_params[j][6],params[j][4],all_params[j][8],Chi2vals[j]] 
-                         for j in range(0,len(params))])
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat',chains, header=str(header))
-        print('Chains_'+str(parspace)+'_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header))
+        print('Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
     #_____Best fit_____
+    Chi2vals=blobs[:,-1]
     imin=list(itertools.chain.from_iterable(np.argwhere(Chi2vals==min(Chi2vals))))
-    Chi2=Chi2vals[imin][0]
-    bestfitparams=params[imin][0]
-    print('Best fit: Chi2='+str(Chi2)+', [log10Y,beta,log10rho0,log10sigma0,sigmavm]='+str(bestfitparams))
-    bestfit=np.array([bestfitparams[0],bestfitparams[1],bestfitparams[2],bestfitparams[3],bestfitparams[4],Chi2])
+    bestfit=blobs[imin][0]
+    print('Best fit: '+str(header)+'='+str(bestfit))
     #Save results:
-    np.savetxt(output_dir+'Bestfitparams_'+str(parspace)+'_'+filename+'_'+runname+'.dat',bestfit)
-    return 'Done.'  
-
+    np.savetxt(output_dir+'Bestfitparams_'+parameter_space+'_'+filename+'_'+runname+'.dat',bestfit)
+    print('Bestfitparams_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
+    return 'Done.'
 
 for parameter_space in parameterspaceList:
     for galnum in galnumvals:
