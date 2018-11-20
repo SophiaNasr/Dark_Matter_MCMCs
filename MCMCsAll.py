@@ -850,25 +850,24 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
             initpoint=False
             params = initialparams
             if parspace=='M200csigmavm':
-                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)[0]
+                lnprobval,blobs = lnprobM200csigmavm(params,galnum,DMprofile)
             elif parspace=='rho0sigma0sigmavm':
-                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)[0]
+                lnprobval,blobs = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
             if lnprobval==-np.inf or np.isnan(lnprobval):
                 continue
             else:
-                chainsini.append(list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]])))
+                chainsini.append(blobs)
             j=len(chainsini)
         else:
             params=initialparams+paramserrors*np.random.randn(len(initialparams))
             if parspace=='M200csigmavm':
-                lnprobval = lnprobM200csigmavm(params,galnum,DMprofile)[0]
+                lnprobval,blobs = lnprobM200csigmavm(params,galnum,DMprofile)
             elif parspace=='rho0sigma0sigmavm':
-                lnprobval = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)[0]
+                lnprobval,blobs = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
             if lnprobval==-np.inf or np.isnan(lnprobval):
                 chainsini=chainsini
             else:
-                output = np.array(list(itertools.chain.from_iterable([params,[(-2.)*lnprobval]])))
-                chainsini.append(output)    
+                chainsini.append(blobs)    
         j=len(chainsini)
     
     return np.array(chainsini)
