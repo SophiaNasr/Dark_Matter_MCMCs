@@ -938,7 +938,7 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     #_____MCMC properties_____
     header=['log10Y', 'beta', 'log10M200', 'log10c', 'log10rho0', 'log10sigma0','r1', 'sigmavm','xsctn', 'Chi2']
     chainlength = nwalkers*nsamples_finalrun   
-    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
+    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=5 #=len(params)
