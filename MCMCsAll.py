@@ -894,7 +894,8 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     print(chainsini)
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
     print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [0,1,2,3,7]] for i in range(0,nwalkers)])
+    print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
@@ -952,7 +953,7 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     print(chainsini)
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
     print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in range(0,len(initialparams))] for i in range(0,nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [0,1,4,5,7]] for i in range(0,nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
