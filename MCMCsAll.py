@@ -274,7 +274,7 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
 
-def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
+def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
@@ -314,14 +314,12 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
         MatchingSuccessTestM = abs((M1-MACNFW(M200,c,r1))/M1)
         #if MatchingSuccessTest <=0.01: Matching success test passed.
         if MatchingSuccessTestrho <=0.01 and MatchingSuccessTestM <=0.01:
-            if r1 < r200(z,M200,c):
-                [rho0,sigma0,sigmavm]=[rho0,sigma0,sigmavm]
-            else:
-                [rho0,sigma0,sigmavm]=[rho0dummy,sigma0dummy,sigmavmdummy]
+            if r1 >= r200(z,M200,c):
+                success=False
         else:
-            [rho0,sigma0,sigmavm]=[rho0dummy,sigma0dummy,sigmavmdummy]
+            success=False
     else:
-        [rho0,sigma0,sigmavm]=[rho0dummy,sigma0dummy,sigmavmdummy]
+        success=False
     try:
         def rhoACSIDM(R):
             if R > r1:
@@ -341,12 +339,12 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm):
         MtotInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     except:
         ##ACSIDM solution fails, ACNFW solution taken instead and dummy variables for [rho0,sigma0,sigmavm] split out
-        [rho0,sigma0,sigmavm]=[rho0dummy,sigma0dummy,sigmavmdummy]
+        success=False
         rhoACSIDMInt=interp1d(Rvals,[rhoACNFW(M200,c,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[MACNFW(M200,c,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
     
     xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]    
+    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,success]    
 
 
 # # ACSIDM profile in terms of [rho0,sigma0,sigmavm]
@@ -717,6 +715,7 @@ def ACSIDMGroupFitProbabilityrho0sigma0sigmavm(galnum,DMprofile,log10Y,beta,log1
 #def lnprob(params,galnum,DMprofile,CoreGrowingCollapse):
 def lnprobM200csigmavm(params,galnum,DMprofile):
     [log10Y,beta,log10M200,log10c,sigmavm]=params
+    success=True
     #_____Free parameters_____ 
     Y=10.**log10Y
     M200=10.**log10M200
@@ -732,49 +731,42 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     log10YSPS=log10YSPSvals[galnum]
     #_____Priors/physical values for free parameters_____     
     if abs(log10Y-log10YSPS) > 0.4:
-        lnprob = -np.inf #prob=0 
+        success=False
     elif abs(beta) > 0.3:
-        lnprob = -np.inf
+        success=False
     elif log10c > np.log10(20.): #0 <= c <= 20. equivalemt to log10c > np.log10(20.)
-        lnprob = -np.inf
+        success=False
     elif sigmavm < 0.: 
-        lnprob = -np.inf
-    else: 
-        #_____ACSIDM profile_____ 
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm)
-        if log10rho0==np.log10(rho0dummy) and log10sigma0==np.log10(sigma0dummy) and sigmavm==sigmavmdummy:
-            lnprob = -np.inf
-        elif xsctn < 0.:
-            lnprob = -np.inf
-        elif xsctn > 10.:
-            lnprob = -np.inf
-        else:     
-            #_____\chi^2 lensing_____ 
-            kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
-            ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
-            #_____\chi^2 mass_____ 
-            #Mass-concentration relation with redshift dependence
-            a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
-            b=-0.101+0.026*z
-            log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-            ###Modified:
-            log10cerror=0.15 #error estimate
-            ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
-            #_____\chi^2 velocity dispersion_____
-            sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
-            ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
-            #_____\chi^2 M/L ratio close to Salpeter_____ 
-            log10YSPSerror=0.1 #error estimate
-            ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
-            #_____Total \chi^2_____ 
-            ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
-            prob=np.exp(-ChiSqTot/2.)
-            lnprob=-ChiSqTot/2.
+        success=False
+    #_____ACSIDM profile_____ 
+    [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success)
+    if xsctn < 0. or xsctn > 10.:
+        success=False     
+    #_____\chi^2 lensing_____ 
+    kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
+    ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
+    #_____\chi^2 mass_____ 
+    #Mass-concentration relation with redshift dependence
+    a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
+    b=-0.101+0.026*z
+    log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
+    ###Modified:
+    log10cerror=0.15 #error estimate
+    ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
+    #_____\chi^2 velocity dispersion_____
+    sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
+    ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
+    #_____\chi^2 M/L ratio close to Salpeter_____ 
+    log10YSPSerror=0.1 #error estimate
+    ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
+    #_____Total \chi^2_____ 
+    ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
+    prob=np.exp(-ChiSqTot/2.)
+    lnprob=-ChiSqTot/2.
     #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-    if lnprob == -np.inf:
-        blobs=[np.log10(Ydummy),betadummy,np.log10(M200dummy),np.log10(cdummy),np.log10(rho0dummy),np.log10(sigma0dummy),r1dummy,sigmavmdummy,xsctndummy,ChiSqTotdummy]
-    else:
-        blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot]
+    if not success:
+        lnprob = -np.inf
+    blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot,success]
     return lnprob, blobs
 
 def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
