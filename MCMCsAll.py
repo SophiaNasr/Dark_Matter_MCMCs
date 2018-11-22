@@ -307,9 +307,9 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
 
     #if ratio > 0.5: #MatchingSuccess=ratio>0.5&&ratio<Log[$MaxNumber]
     if success:
+        rhoACNFW_val=rhoACNFW(M200,c,r1)
+        MACNFW_val=MACNFW(M200,c,r1)
         def Findrho0sigma0(rho0sigma0):
-            rhoACNFW_val=rhoACNFW(M200,c,r1)
-            MACNFW_val=MACNFW(M200,c,r1)
             ratio = MACNFW_val/(4.*np.pi*rhoACNFW_val*r1**3.)
             [rho0,sigma0] = rho0sigma0
             sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
