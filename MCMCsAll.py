@@ -286,7 +286,11 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
         return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0]
     def MACNFW(M200,c,R):
         return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1]
-    [rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
+    #[rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
+
+    # dummy default values
+    rhoACSIDMInt=1.
+    MtotInt=1.
 
     r200_val=r200(z,M200,c)
 
@@ -295,13 +299,14 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
         return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
     r1start=10.
     r1=opt.fsolve(Findr1,r1start)[0] #default: ,xtol=10.**(-3.), xtol=1.49012e-08
-
+    if r1 >= r200_val:
+        success=False
     
     
     #_____ACSIDM profile__________
     ratio = MACNFW(M200,c,r1)/(4.*np.pi*rhoACNFW(M200,c,r1)*r1**3.)
     #if ratio > 0.5: #MatchingSuccess=ratio>0.5&&ratio<Log[$MaxNumber]
-    if ratio > 0.5:
+    if ratio > 0.5 and success:
         def Findrho0sigma0(rho0sigma0):
             [rho0,sigma0] = rho0sigma0
             sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
@@ -317,35 +322,31 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
         MatchingSuccessTestrho = abs((rho1-rhoACNFW(M200,c,r1))/rho1)
         MatchingSuccessTestM = abs((M1-MACNFW(M200,c,r1))/M1)
         #if MatchingSuccessTest <=0.01: Matching success test passed.
-        if MatchingSuccessTestrho <=0.01 and MatchingSuccessTestM <=0.01:
-            if r1 >= r200_val:
-                success=False
-        else:
+        if MatchingSuccessTestrho > 0.01 or MatchingSuccessTestM > 0.01:
             success=False
     else:
-        success=False        
-    try:
-        def rhoACSIDM(R):
-            if R > r1:
-                rhodm = rhoACNFW(M200,c,R)
-            else: 
-                #rhodm = rhoiso(rho0,sigma0,R)
-                rhodm = sol[0](R)
-            return rhodm 
-        def MACSIDM(R):
-            if R > r1:
-                Mdm = MACNFW(M200,c,R)
-            else: 
-                #Mdm = Miso(rho0,sigma0,R)
-                Mdm = sol[1](R)
-            return Mdm
-        rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        MtotInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-    except:
-        ##ACSIDM solution fails, ACNFW solution taken instead and dummy variables for [rho0,sigma0,sigmavm] split out
         success=False
-        rhoACSIDMInt=interp1d(Rvals,[rhoACNFW(M200,c,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        MtotInt=interp1d(Rvals,[MACNFW(M200,c,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+    if success:
+        try:
+            def rhoACSIDM(R):
+                if R > r1:
+                    rhodm = rhoACNFW(M200,c,R)
+                else: 
+                    #rhodm = rhoiso(rho0,sigma0,R)
+                    rhodm = sol[0](R)
+                return rhodm 
+            def MACSIDM(R):
+                if R > r1:
+                    Mdm = MACNFW(M200,c,R)
+                else: 
+                    #Mdm = Miso(rho0,sigma0,R)
+                    Mdm = sol[1](R)
+                return Mdm
+            rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            MtotInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+        except:
+            ##ACSIDM solution fails, ACNFW solution taken instead and dummy variables for [rho0,sigma0,sigmavm] split out
+            success=False
 
     vel=(4./np.sqrt(np.pi))*sigma0
     xsctn=sigmavm/vel
@@ -457,7 +458,7 @@ def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm):
         [r1,M200val,cval]=[r1dummy,M200dummy,cdummy]
         rhoACSIDMInt=interp1d(Rvals,[rhoiso(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[Miso(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-        
+    
     return [MtotInt,rhoACSIDMInt,np.log10(M200val),np.log10(cval),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn]   
 
 
@@ -668,6 +669,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     r1=1.
     r200=1.
     ChiSqTot=np.inf
+    lnprob=-np.inf
     
     #_____Priors/physical values for free parameters_____     
     if abs(log10Y-log10YSPS) > 0.4:
@@ -706,9 +708,6 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         prob=np.exp(-ChiSqTot/2.)
         lnprob=-ChiSqTot/2.
         #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-    else:
-        lnprob = -np.inf
-        #blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot,success]
     blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
@@ -778,13 +777,12 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
 def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
     print('Determine starting points for walkers:')
     #_____Starting points for walkers_____
-    j=0
+    params = initialparams
     initpoint=True
     chainsini=[]
-    while j < nwalkers:
+    while len(chainsini) < nwalkers:
         if initpoint:
             initpoint=False
-            params = initialparams
             if parspace=='M200csigmavm':
                 lnprobval,blobs = lnprobM200csigmavm(params,galnum,DMprofile)
             elif parspace=='rho0sigma0sigmavm':
@@ -793,7 +791,6 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
                 continue
             else:
                 chainsini.append(blobs)
-            j=len(chainsini)
         else:
             params=initialparams+paramserrors*np.random.randn(len(initialparams))
             if parspace=='M200csigmavm':
@@ -801,11 +798,9 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
             elif parspace=='rho0sigma0sigmavm':
                 lnprobval,blobs = lnprobrho0sigma0sigmavm(params,galnum,DMprofile)
             if lnprobval==-np.inf or np.isnan(lnprobval):
-                chainsini=chainsini
+                continue
             else:
-                chainsini.append(blobs)    
-        j=len(chainsini)
-    
+                chainsini.append(blobs)
     return np.array(chainsini)
 
 
