@@ -231,6 +231,9 @@ def ACNFWProfile(DMprofile,galnum,Y,M200,c,r): #DMprofile = NFW, Bl, Gn
     def MNFW(R):
         return 4.*np.pi*rhos(z,c)*rs(z,M200,c)**3.*(np.log((R+rs(z,M200,c))/rs(z,M200,c))-R/(R+rs(z,M200,c)))
     #_____AC NFW profile_____
+
+    Mb_r200=Mb(r200(z,M200,c))
+    
     if DMprofile == 'NFW': [A,w]=[1.,0.]
     if DMprofile == 'Bl': [A,w]=[1.,1.]
     if DMprofile == 'Gn': [A,w]=[0.8,0.85]
@@ -238,7 +241,7 @@ def ACNFWProfile(DMprofile,galnum,Y,M200,c,r): #DMprofile = NFW, Bl, Gn
         def f(ri):
             def bar(R):
                 return r200(z,M200,c)*A*(R/r200(z,M200,c))**w
-            return (ri/R*(1+Mb(r200(z,M200,c))/M200)-1.)*MNFW(bar(ri))-Mb(bar(R))
+            return (ri/R*(1+Mb_r200/M200)-1.)*MNFW(bar(ri))-Mb(bar(R))
         #_____Find root_____
         ristart=r
         ri=opt.fsolve(f,ristart,xtol=10.**(-3.))[0] #default: xtol=1.49012e-08
