@@ -657,8 +657,8 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     log10YSPS=log10YSPSvals[galnum]
 
     # dummy definitions
-    rho0=10**8
-    sigma0=600.
+    rho0=1
+    sigma0=1.
     vel=1.
     sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
     log10rho0=1.
