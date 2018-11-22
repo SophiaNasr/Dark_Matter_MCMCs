@@ -274,7 +274,7 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
 
-def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success):
+def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
@@ -288,11 +288,15 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success):
         return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1]
     [rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
 
+    r200_val=r200(z,M200,c)
+
     #_____Isothermal profile_____
     def Findr1(R):
         return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
     r1start=10.
     r1=opt.fsolve(Findr1,r1start)[0] #default: ,xtol=10.**(-3.), xtol=1.49012e-08
+
+    
     
     #_____ACSIDM profile__________
     ratio = MACNFW(M200,c,r1)/(4.*np.pi*rhoACNFW(M200,c,r1)*r1**3.)
@@ -314,12 +318,12 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success):
         MatchingSuccessTestM = abs((M1-MACNFW(M200,c,r1))/M1)
         #if MatchingSuccessTest <=0.01: Matching success test passed.
         if MatchingSuccessTestrho <=0.01 and MatchingSuccessTestM <=0.01:
-            if r1 >= r200(z,M200,c):
+            if r1 >= r200_val:
                 success=False
         else:
             success=False
     else:
-        success=False
+        success=False        
     try:
         def rhoACSIDM(R):
             if R > r1:
@@ -342,10 +346,10 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success):
         success=False
         rhoACSIDMInt=interp1d(Rvals,[rhoACNFW(M200,c,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
         MtotInt=interp1d(Rvals,[MACNFW(M200,c,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-    
-    xsctn=sigmavm/((4./np.sqrt(np.pi))*sigma0)
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,success]    
 
+    vel=(4./np.sqrt(np.pi))*sigma0
+    xsctn=sigmavm/vel
+    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,r200_val,vel,success]
 
 # # ACSIDM profile in terms of [rho0,sigma0,sigmavm]
 
@@ -624,88 +628,6 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
 ###Very small differences to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
 ###Difference to Sean's code less than 0.1% (1-2% is accuracy of Sean's code).
 
-# # ACSIDM group fit probability
-
-# ## ACSIDM group fit probability
-
-def ACSIDMGroupFitProbabilityM200csigmavm(galnum,DMprofile,log10Y,beta,log10M200,log10c,sigmavm):
-    #_____Free parameters_____ 
-    Y=10.**log10Y
-    M200=10.**log10M200
-    c=10.**log10c
-    #_____Group properties_____ 
-    z = zvals[galnum]
-    kappabarobs=kappabarobsvals[galnum]
-    kappabarobserror=kappabarobserrorvals[galnum]
-    log10M200obs=log10M200obsvals[galnum]
-    log10M200error=log10M200errorvals[galnum]
-    sigmaLOSobs=sigmaLOSobsvals[galnum]
-    sigmaLOSerror=sigmaLOSerrorvals[galnum]
-    log10YSPS=log10YSPSvals[galnum]
-    #_____ACSIDM profile_____ 
-    [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm)
-    #_____\chi^2 lensing_____ 
-    kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
-    ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
-    #_____\chi^2 mass_____ 
-    #Mass-concentration relation with redshift dependence
-    a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
-    b=-0.101+0.026*z
-    log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-    log10cerror=0.15 #error estimate
-    ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
-    #_____\chi^2 velocity dispersion_____
-    sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
-    ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
-    #_____\chi^2 M/L ratio close to Salpeter_____ 
-    log10YSPSerror=0.1 #error estimate
-    ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
-    #_____Total \chi^2_____ 
-    ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
-    prob=np.exp(-ChiSqTot/2.)
-    output=np.array([ChiSqLensing,ChiSqMass,ChiSqDisp,prob])
-    return output
-
-###Different values for prob in comparison to Sean's code come from differences when computing Mtot and interpolation function for f(beta,w).
-
-def ACSIDMGroupFitProbabilityrho0sigma0sigmavm(galnum,DMprofile,log10Y,beta,log10rho0,log10sigma0,sigmavm):
-    #_____Free parameters_____ 
-    Y=10.**log10Y
-    rho0=10.**log10rho0
-    sigma0=10.**log10sigma0
-    #_____Group properties_____ 
-    z = zvals[galnum]
-    kappabarobs=kappabarobsvals[galnum]
-    kappabarobserror=kappabarobserrorvals[galnum]
-    log10M200obs=log10M200obsvals[galnum]
-    log10M200error=log10M200errorvals[galnum]
-    sigmaLOSobs=sigmaLOSobsvals[galnum]
-    sigmaLOSerror=sigmaLOSerrorvals[galnum]
-    log10YSPS=log10YSPSvals[galnum]
-    #_____ACSIDM profile_____ 
-    [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn]=ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm)
-    #_____\chi^2 lensing_____ 
-    kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
-    ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
-    #_____\chi^2 mass_____ 
-    #Mass-concentration relation with redshift dependence
-    a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
-    b=-0.101+0.026*z
-    log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-    log10cerror=0.15 #error estimate
-    ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
-    #_____\chi^2 velocity dispersion_____
-    sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
-    ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
-    #_____\chi^2 M/L ratio close to Salpeter_____ 
-    log10YSPSerror=0.1 #error estimate
-    ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
-    #_____Total \chi^2_____ 
-    ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
-    prob=np.exp(-ChiSqTot/2.)
-    output=np.array([ChiSqLensing,ChiSqMass,ChiSqDisp,prob])
-    return output
-
 # # Set up MCMCs
 
 # ## Logarithm of probability: lnprob
@@ -729,6 +651,24 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     sigmaLOSobs=sigmaLOSobsvals[galnum]
     sigmaLOSerror=sigmaLOSerrorvals[galnum]
     log10YSPS=log10YSPSvals[galnum]
+
+    # dummy definitions
+    rho0=10**8
+    sigma0=600.
+    vel=1.
+    sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
+    log10rho0=1.
+    log10sigma0=np.log10(sigma0)
+    xsctn=1.
+    prob=0.
+    ChiSqDisp=np.inf
+    ChiSqLensing=np.inf
+    ChiSqMass=np.inf
+    kappabar=1.
+    r1=1.
+    r200=1.
+    ChiSqTot=np.inf
+    
     #_____Priors/physical values for free parameters_____     
     if abs(log10Y-log10YSPS) > 0.4:
         success=False
@@ -738,36 +678,40 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         success=False
     elif sigmavm < 0.: 
         success=False
-    #_____ACSIDM profile_____ 
-    [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,success)
-    if xsctn < 0. or xsctn > 10.:
-        success=False     
-    #_____\chi^2 lensing_____ 
-    kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
-    ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
-    #_____\chi^2 mass_____ 
-    #Mass-concentration relation with redshift dependence
-    a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
-    b=-0.101+0.026*z
-    log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-    ###Modified:
-    log10cerror=0.15 #error estimate
-    ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
-    #_____\chi^2 velocity dispersion_____
-    sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
-    ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
-    #_____\chi^2 M/L ratio close to Salpeter_____ 
-    log10YSPSerror=0.1 #error estimate
-    ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
-    #_____Total \chi^2_____ 
-    ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
-    prob=np.exp(-ChiSqTot/2.)
-    lnprob=-ChiSqTot/2.
-    #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-    if not success:
+    #_____ACSIDM profile_____
+    if success:
+        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200,vel,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success)
+        if xsctn < 0. or xsctn > 10.:
+            success=False
+    if success:
+        #_____\chi^2 lensing_____ 
+        kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
+        ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
+        #_____\chi^2 mass_____ 
+        #Mass-concentration relation with redshift dependence
+        a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
+        b=-0.101+0.026*z
+        log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
+        ###Modified:
+        log10cerror=0.15 #error estimate
+        ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
+        #_____\chi^2 velocity dispersion_____
+        sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
+        ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
+        #_____\chi^2 M/L ratio close to Salpeter_____ 
+        log10YSPSerror=0.1 #error estimate
+        ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
+        #_____Total \chi^2_____
+        ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
+        prob=np.exp(-ChiSqTot/2.)
+        lnprob=-ChiSqTot/2.
+        #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    else:
         lnprob = -np.inf
-    blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot,success]
-    return lnprob, blobs
+        #blobs=[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot,success]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
+    flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
+    return lnprob, flatblobs
 
 def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     [log10Y,beta,log10rho0,log10sigma0,sigmavm]=params 
@@ -869,7 +813,9 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
 
 def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
-    header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
+    #header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun
     filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
     #_____Set up the MCMC_____
@@ -884,19 +830,21 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     starting_point_start = time.time()
     chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace)
     print(chainsini)
-    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
+    formatter=['%.18e' for x in range(len(header)-1)]
+    formatter.append('%d')
+    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [0,1,2,3,7]] for i in range(0,nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,-7,-6,-4]] for i in range(nwalkers)])
     print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
     #_____MCMCs_____
     parallelstart = time.time()
-    for i in range(0,nburnins+1):
+    for i in range(nburnins+1):
         if i==0:
             paramsini=p0    
-        if i in range(0,nburnins): #Burn-in runs 
+        if i in range(nburnins): #Burn-in runs 
             nsamples=nsamples_burnin #chainlength = nwalkers*nsamples
             runname='run'+str(i+1)
         else: #MCMC production run
@@ -910,13 +858,13 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
         sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
         #Save results on computer:
-        np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header))
+        np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header),fmt=formatter)
         print('Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
     #_____Best fit_____
-    Chi2vals=blobs[:,-1]
+    Chi2vals=blobs[:,-2]
     imin=list(itertools.chain.from_iterable(np.argwhere(Chi2vals==min(Chi2vals))))
     bestfit=blobs[imin][0]
     print('Best fit: '+str(header)+'='+str(bestfit))
@@ -945,16 +893,16 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     print(chainsini)
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat',chainsini, header=str(header))
     print('Startingpointswalkers_'+str(parspace)+'_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [0,1,4,5,7]] for i in range(0,nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [0,1,4,5,7]] for i in range(nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
     #_____MCMCs_____
     parallelstart = time.time()
-    for i in range(0,nburnins+1):
+    for i in range(nburnins+1):
         if i==0:
             paramsini=p0    
-        if i in range(0,nburnins): #Burn-in runs 
+        if i in range(nburnins): #Burn-in runs 
             nsamples=nsamples_burnin #chainlength = nwalkers*nsamples
             runname='run'+str(i+1)
         else: #MCMC production run
