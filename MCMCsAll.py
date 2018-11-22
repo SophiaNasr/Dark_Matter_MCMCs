@@ -304,23 +304,26 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
     
     
     #_____ACSIDM profile__________
-    ratio = MACNFW(M200,c,r1)/(4.*np.pi*rhoACNFW(M200,c,r1)*r1**3.)
+
     #if ratio > 0.5: #MatchingSuccess=ratio>0.5&&ratio<Log[$MaxNumber]
-    if ratio > 0.5 and success:
+    if success:
         def Findrho0sigma0(rho0sigma0):
+            rhoACNFW_val=rhoACNFW(M200,c,r1)
+            MACNFW_val=MACNFW(M200,c,r1)
+            ratio = MACNFW_val/(4.*np.pi*rhoACNFW_val*r1**3.)
             [rho0,sigma0] = rho0sigma0
             sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
             [rho1,M1]=[sol[0](r1),sol[1](r1)]
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
-            equation2 = rhoACNFW(M200,c,r1) - rho1
+            equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
         [rho0start,sigma0start]=[10.**7.5,580.]
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
         #_____Matching success tests_____
-        MatchingSuccessTestrho = abs((rho1-rhoACNFW(M200,c,r1))/rho1)
-        MatchingSuccessTestM = abs((M1-MACNFW(M200,c,r1))/M1)
+        MatchingSuccessTestrho = abs((rho1-rhoACNFW_val)/rho1)
+        MatchingSuccessTestM = abs((M1-MACNFW_val)/M1)
         #if MatchingSuccessTest <=0.01: Matching success test passed.
         if MatchingSuccessTestrho > 0.01 or MatchingSuccessTestM > 0.01:
             success=False
