@@ -23,7 +23,6 @@ parser.add_argument("--data", help="Group data or simulation data",type=str,requ
 parser.add_argument("--parameter-space", help="Parameters to scan over, either [M200,c,sigmavm] or [rho0,sigma0,sigmavm]",type=str,nargs="+",required=True,choices=['M200csigmavm','rho0sigma0sigmavm'])
 parser.add_argument("--groups", help="Groups included in run",nargs="+",type=int,required=True,choices=range(16))
 parser.add_argument("--profiles", help="Profiles included in run",nargs="+",type=str,required=True,choices=['NFW','Bl','Gn'])
-parser.add_argument("--threads", help="set the number of threads. Default is 1 thread.",default=1,type=int)
 parser.add_argument("--burn-ins", help="set number of burn-in runs. Default is 5",default=5,type=int)
 parser.add_argument("--nwalkers", help="set number of walkers. Default is 224.",default=224,type=int)
 parser.add_argument("--burn-in-samples", help="set number of samples for burn-in runs. Default is 50.",default=50,type=int)
@@ -35,7 +34,6 @@ data=args.data #args.data
 parameterspaceList=args.parameter_space #args.parameter_space
 galnumvals=args.groups
 DMprofileList=args.profiles
-threads=args.threads
 burnin_val=args.burn_ins
 nwalker_val=args.nwalkers
 burnin_samples=args.burn_in_samples
@@ -46,7 +44,7 @@ output_dir="./MCMC_results/"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+" with "+str(threads)+" threads.")
+print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList))
 print("Data is "+str(data)+", and parameter space is "+str(parameterspaceList))
 
 # # Constants
@@ -832,7 +830,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     #header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
     header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun
-    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
+    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=5 #=len(params)
@@ -895,7 +893,7 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun   
-    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)+'_threads'+str(threads)
+    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=5 #=len(params)
