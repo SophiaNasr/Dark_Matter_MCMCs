@@ -14,6 +14,7 @@ import itertools #to merge lists
 import time #for printing out timing
 import emcee #for running MCMCs
 import argparse
+from multiprocessing import Pool
 
 start = time.time()
 
@@ -864,11 +865,12 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
         else: #MCMC production run
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
-        blobs=sampler.get_blobs(flat=True)
-        accfrac=np.mean(sampler.acceptance_fraction)
-        sampler.reset()
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), pool=pool)
+            paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
+            blobs=sampler.get_blobs(flat=True)
+            accfrac=np.mean(sampler.acceptance_fraction)
+            sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
         #Save results on computer:
         np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header),fmt=formatter)
@@ -925,11 +927,12 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
         else: #MCMC production run
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), threads=threads)
-        paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
-        blobs=sampler.get_blobs(flat=True)
-        accfrac=np.mean(sampler.acceptance_fraction)
-        sampler.reset()
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), pool=pool)
+            paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
+            blobs=sampler.get_blobs(flat=True)
+            accfrac=np.mean(sampler.acceptance_fraction)
+            sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
         #Save results on computer:
         np.savetxt(output_dir+'Chains_'+parameter_space+'_'+filename+'_'+runname+'.dat',blobs, header=str(header),fmt=formatter)
