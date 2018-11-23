@@ -63,12 +63,6 @@ MSun_in_g = 1.98855*10.**30.*10.**3. #Msun in g
 km_in_kpc = 1./(3.0857*10.**16.) #kpc=3.0857*10^16 km
 cm_in_kpc = km_in_kpc/(10.**3.*10**2.)
 
-#_____Dummy variables_____
-#[log10Y,beta,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,ChiSqTot]
-[r1dummy,M200dummy,cdummy]=[100.,10.**12.,1.]
-[rho0dummy,sigma0dummy,sigmavmdummy,xsctndummy]=[10**8.,600.,50.,1.]
-[Ydummy,betadummy,ChiSqTotdummy]=[1.,0.,np.inf]
-
 
 # # Load data
 
@@ -675,8 +669,6 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         success=False
     elif abs(beta) > 0.3:
         success=False
-    elif log10c > np.log10(20.): #0 <= c <= 20. equivalemt to log10c > np.log10(20.)
-        success=False
     elif sigmavm < 0.: 
         success=False
     #_____ACSIDM profile_____
@@ -761,9 +753,6 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     if success: 
         #_____ACSIDM profile_____
         [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,r200_val,success]=ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
-        if log10c > np.log10(20.): #0 <= c <= 20. equivalemt to log10c > np.log10(20.)
-            success=False
-    if success:     
         #_____\chi^2 lensing_____ 
         kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
         ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
@@ -865,8 +854,9 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
             runname='finalrun'
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), pool=pool)
-            paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
+            sampler.run_mcmc(paramsini,nsamples) 
             blobs=sampler.get_blobs(flat=True)
+            state=sampler.get_state()
             accfrac=np.mean(sampler.acceptance_fraction)
             sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
