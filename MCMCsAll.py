@@ -854,9 +854,9 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
             runname='finalrun'
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(galnum,DMprofile), pool=pool)
-            sampler.run_mcmc(paramsini,nsamples) 
+            paramsini_tmp,lnprobval,state,blobstmp=sampler.run_mcmc(paramsini,nsamples)
+            paramsini=paramsini_tmp
             blobs=sampler.get_blobs(flat=True)
-            state=sampler.get_state()
             accfrac=np.mean(sampler.acceptance_fraction)
             sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
