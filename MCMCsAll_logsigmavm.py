@@ -636,7 +636,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     Y=10.**log10Y
     M200=10.**log10M200
     c=10.**log10c
-	sigmavm=10.**log10sigmavm
+    sigmavm=10.**log10sigmavm
     #_____Group properties_____ 
     z = zvals[galnum]
     kappabarobs=kappabarobsvals[galnum]
@@ -711,7 +711,7 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     Y=10.**log10Y
     rho0=10.**log10rho0
     sigma0=10.**log10sigma0
-	sigmavm=10.**log10sigmavm
+    sigmavm=10.**log10sigmavm
     #_____Group properties_____ 
     z = zvals[galnum]
     kappabarobs=kappabarobsvals[galnum]
@@ -817,7 +817,7 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
 
 def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
-	header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","xsctn","ChiSqTot","success"]]
+    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","xsctn","ChiSqTot","success"]]
     #header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
     #header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
     header=np.array(list(itertools.chain.from_iterable(header)))
@@ -883,7 +883,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
 def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
     header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","xsctn","ChiSqTot","success"]]
-	#header=['log10Y', 'beta', 'log10M200', 'log10c', 'log10rho0', 'log10sigma0','r1', 'sigmavm','xsctn', 'Chi2']
+    #header=['log10Y', 'beta', 'log10M200', 'log10c', 'log10rho0', 'log10sigma0','r1', 'sigmavm','xsctn', 'Chi2']
     #header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun   
