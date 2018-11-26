@@ -917,7 +917,8 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
             runname='finalrun'
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), pool=pool)
-            paramsini, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
+            paramsini_tmp, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples)
+            paramsini=paramsini_tmp
             blobs=sampler.get_blobs(flat=True)
             accfrac=np.mean(sampler.acceptance_fraction)
             sampler.reset()
