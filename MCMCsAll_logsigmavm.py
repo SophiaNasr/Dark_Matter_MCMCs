@@ -755,27 +755,28 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     if success: 
         #_____ACSIDM profile_____
         [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,r200_val,success]=ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
-        #_____\chi^2 lensing_____ 
-        kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
-        ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
-        #_____\chi^2 mass_____ 
-        #Mass-concentration relation with redshift dependence
-        a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
-        b=-0.101+0.026*z
-        log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
-        ###Modified:
-        log10cerror=0.15 #error estimate
-        ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
-        #_____\chi^2 velocity dispersion_____
-        sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
-        ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
-        #_____\chi^2 M/L ratio close to Salpeter_____ 
-        log10YSPSerror=0.1 #error estimate
-        ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
-        #_____Total \chi^2_____ 
-        ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
-        prob=np.exp(-ChiSqTot/2.)*sigmavm
-        lnprob=np.log(prob)
+        #_____\chi^2 lensing_____
+        if success:
+            kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
+            ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
+            #_____\chi^2 mass_____ 
+            #Mass-concentration relation with redshift dependence
+            a=0.520+(0.905-0.520)*np.exp(-0.617*z**1.21)
+            b=-0.101+0.026*z
+            log10cNFW=a+b*(log10M200-np.log10(10.**12.*h**(-1.)))  #M200 in units of MSun
+            ###Modified:
+            log10cerror=0.15 #error estimate
+            ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
+            #_____\chi^2 velocity dispersion_____
+            sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
+            ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
+            #_____\chi^2 M/L ratio close to Salpeter_____ 
+            log10YSPSerror=0.1 #error estimate
+            ChiSqML=(log10Y-log10YSPS)**2./log10YSPSerror**2.
+            #_____Total \chi^2_____ 
+            ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
+            prob=np.exp(-ChiSqTot/2.)*sigmavm
+            lnprob=np.log(prob)
 
     blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200,log10M200,log10c,vel,sigmavm,log10sigmavm,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
