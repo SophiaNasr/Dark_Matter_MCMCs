@@ -660,7 +660,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     ChiSqMass=np.inf
     kappabar=1.
     r1=1.
-    r200=1.
+    r200_val=1.
     ChiSqTot=np.inf
     lnprob=-np.inf
     
@@ -673,7 +673,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         success=False
     #_____ACSIDM profile_____
     if success:
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200,vel,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success)
+        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success)
         if xsctn < 0. or xsctn > 10.:
             success=False
     if success:
@@ -699,7 +699,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         prob=np.exp(-ChiSqTot/2.)
         lnprob=-ChiSqTot/2.
         #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
-    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
 
@@ -736,7 +736,7 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     ChiSqMass=np.inf
     kappabar=1.
     r1=1.
-    r200=1.
+    r200_val=1.
     ChiSqTot=np.inf
     lnprob=-np.inf
 
@@ -775,7 +775,7 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
         prob=np.exp(-ChiSqTot/2.)
         lnprob=-ChiSqTot/2.
 
-    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
 
