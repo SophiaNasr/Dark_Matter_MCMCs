@@ -680,6 +680,9 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     if success:
         #_____\chi^2 lensing_____ 
         kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
+        if np.isnan(kappabar):
+            success=False
+    if success:
         ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
         #_____\chi^2 mass_____ 
         #Mass-concentration relation with redshift dependence
@@ -699,7 +702,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         ChiSqTot=ChiSqLensing+ChiSqMass+ChiSqDisp #+ChiSqML
         prob=np.exp(-ChiSqTot/2.)*sigmavm
         lnprob=np.log(prob)
-        #blobs=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','log10sigmavm','xsctn', 'Chi2']
+
     blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
@@ -758,6 +761,9 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
         #_____\chi^2 lensing_____
         if success:
             kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
+            if np.isnan(kappabar):
+                success=False
+        if success:
             ChiSqLensing = (kappabar-kappabarobs)**2./kappabarobserror**2.
             #_____\chi^2 mass_____ 
             #Mass-concentration relation with redshift dependence
