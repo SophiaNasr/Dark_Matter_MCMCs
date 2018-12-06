@@ -269,6 +269,36 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     rhoiso=interp1d(rvals,sol[:,0], kind='cubic',fill_value='extrapolate')
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
+	
+def rho0sigma0ini(r1,ratioNFW,rhoACNFW_val):
+    #_____Isothermal profile in terms of h(r)_____
+    def h(alpha):
+        def hr(y,r):
+            [h,dhdr]=y
+            d2hdr2=-(2.*dhdr)/r-alpha*np.exp(h)
+            return [dhdr,d2hdr2]
+        y0 = [0.0, -(alpha*rmin)/3.] #initial conditions at r=rmin
+        y = odeint(hr,y0,rvals,full_output=0) #full_output=True
+        hInt=interp1d(rvals,y[:,0], kind='cubic',fill_value='extrapolate')
+        return hInt
+    #_____ratio_____
+    def ratio(alpha):
+        hInt=h(alpha)
+        #_____ratio(alpha)____
+        def Mintegrand(r):
+            return r**2*np.exp(hInt(r))
+        M1integrand = integrate.quad(Mintegrand,rmin,r1,limit=200)[0]
+        ratio=M1integrand/(np.exp(hInt(r1))*r1**3.)
+        #print([ratio,ratioNFW])
+        return ratio-ratioNFW
+    #_____Find root_____
+    alphastart=0.01
+    alpha=opt.fsolve(ratio,alphastart)[0] #default: xtol=1.49012e-08 #xtol=10.**(-3.)
+    #_____[rho0,sigma0]_____
+    rho1=rhoACNFW_val
+    rho0=rho1*np.exp(-h(alpha)(r1))
+    sigma0=np.sqrt((4.*np.pi*G*rho0)/alpha)
+    return [rho0,sigma0]
 
 def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success):
     #_____Group properties_____
@@ -313,7 +343,8 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        [rho0start,sigma0start]=[10.**7.5,580.]
+		[rho0start,sigma0start]=rho0sigma0ini(r1,ratio,rhoACNFW_val)
+        #[rho0start,sigma0start]=[10.**7.5,580.]
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
