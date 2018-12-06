@@ -901,7 +901,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     formatter.append('%d')
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [3,4,-8,-7,-4]] for i in range(nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,-10,-9,-6]] for i in range(nwalkers)])
     print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
