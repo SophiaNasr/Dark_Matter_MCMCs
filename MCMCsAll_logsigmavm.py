@@ -1,3 +1,10 @@
+
+# coding: utf-8
+
+# In[ ]:
+
+
+# %load MCMCsAll_logsigmavm
 import os,sys
 import numpy as np
 import pandas as pd #for loading csv Excel files
@@ -293,11 +300,12 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,succ
     #_____Isothermal profile_____
     def Findr1(R):
         return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
-    r1start=10.
-    r1=opt.fsolve(Findr1,r1start)[0] #default: ,xtol=10.**(-3.), xtol=1.49012e-08
-    if r1 >= r200_val:
+    try:
+        r1 = opt.brentq(Findr1,Rmin,Rmax,maxiter=150)
+        if r1 >= r200_val:
+            success=False
+    except:
         success=False
-    
     
     #_____ACSIDM profile__________
 
@@ -975,3 +983,4 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
+
