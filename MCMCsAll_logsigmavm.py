@@ -277,7 +277,7 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
 
-def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success):
+def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
@@ -682,7 +682,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         success=False
     #_____ACSIDM profile_____
     if success:
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,success)
+        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,success)
         if xsctn < 0. or xsctn > 10.:
             success=False
     if success:
