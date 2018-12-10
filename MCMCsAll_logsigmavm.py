@@ -4,6 +4,12 @@
 # In[ ]:
 
 
+# %load MCMCsAll_logsigmavm.py
+
+
+# In[ ]:
+
+
 # %load MCMCsAll_logsigmavm
 import os,sys
 import numpy as np
@@ -277,6 +283,39 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
     return [rhoiso,Miso]
 
+alphastartvals=np.logspace(-5.,5.,100)
+
+def rho0sigma0ini(r1,ratioNFW,rhoACNFW_val):
+    #_____Isothermal profile in terms of h(r)_____
+    def h(alpha):
+        def hr(y,r):
+            [h,dhdr]=y
+            d2hdr2=-(2.*dhdr)/r-alpha*np.exp(h)
+            return [dhdr,d2hdr2]
+        y0 = [0.0, -(alpha*rmin)/3.] #initial conditions at r=rmin
+        y = odeint(hr,y0,rvals,full_output=0) #full_output=True
+        hInt=interp1d(rvals,y[:,0], kind='cubic',fill_value='extrapolate')
+        return hInt
+    #_____ratio_____
+    def ratio(alpha):
+        hInt=h(alpha)
+        #_____ratio(alpha)____
+        def Mintegrand(r):
+            return r**2*np.exp(hInt(r))
+        M1integrand = integrate.quad(Mintegrand,rmin,r1,limit=200)[0]
+        ratio=M1integrand/(np.exp(hInt(r1))*r1**3.)
+        return ratio
+    #_____Find root_____
+    ratiovals=np.array([ratio(alpha) for alpha in alphastartvals])
+    alpha_ratioInt=interp1d(ratiovals,alphastartvals,kind='cubic',fill_value='extrapolate')
+    alpha=alpha_ratioInt(ratioNFW)
+    #_____[rho0,sigma0]_____
+    rho1=rhoACNFW_val
+    rho0=rho1*np.exp(-h(alpha)(r1))
+    sigma0=np.sqrt((4.*np.pi*G*rho0)/alpha)
+    return [rho0,sigma0]
+
+
 def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,success):
     #_____Group properties_____
     z = zvals[galnum]
@@ -285,11 +324,11 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,s
         return Y*MbInt[galnum](R)
     
     #_____AC NFW profile_____
-    def rhoACNFW(M200,c,R):
-        return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0]
-    def MACNFW(M200,c,R):
-        return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1]
-    #[rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
+    rhoACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0] for R in Rvals])
+    rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='cubic',fill_value='extrapolate')
+    
+    MACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1] for R in Rvals])
+    MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
 
     # dummy default values
     rhoACSIDMInt=1.
@@ -297,31 +336,27 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,s
 
     r200_val=r200(z,M200,c)
 
-    #_____Isothermal profile_____
-    def Findr1(R):
-        return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
-    try:
-        r1 = opt.brentq(Findr1,Rmin,Rmax,maxiter=150)
-        if r1 >= r200_val:
-            success=False
-    except:
-        success=False
+    #_____Find r1_____
+    #Inverse function
+    R_rhoACNFWInt=interp1d(rhoACNFWvals,Rvals,kind='cubic',fill_value='extrapolate')
+    rhoACNFWr1=1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage)
+    r1=R_rhoACNFWInt(rhoACNFWr1)
     
     #_____ACSIDM profile__________
 
     #if ratio > 0.5: #MatchingSuccess=ratio>0.5&&ratio<Log[$MaxNumber]
     if success:
-        rhoACNFW_val=rhoACNFW(M200,c,r1)
-        MACNFW_val=MACNFW(M200,c,r1)
+        rhoACNFW_val=rhoACNFWInt(r1)
+        MACNFW_val=MACNFWInt(r1)
+        ratio = MACNFW_val/(4.*np.pi*rhoACNFW_val*r1**3.)
         def Findrho0sigma0(rho0sigma0):
-            ratio = MACNFW_val/(4.*np.pi*rhoACNFW_val*r1**3.)
             [rho0,sigma0] = rho0sigma0
             sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
             [rho1,M1]=[sol[0](r1),sol[1](r1)]
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        [rho0start,sigma0start]=[10.**7.5,580.]
+        [rho0start,sigma0start]=rho0sigma0ini(r1,ratio,rhoACNFW_val)
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
@@ -337,14 +372,16 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,s
         try:
             def rhoACSIDM(R):
                 if R > r1:
-                    rhodm = rhoACNFW(M200,c,R)
+                    #rhodm = rhoACNFW(M200,c,R)
+                    rhodm = rhoACNFWInt(R)
                 else: 
                     #rhodm = rhoiso(rho0,sigma0,R)
                     rhodm = sol[0](R)
                 return rhodm 
             def MACSIDM(R):
                 if R > r1:
-                    Mdm = MACNFW(M200,c,R)
+                    #Mdm = MACNFW(M200,c,R)
+                    Mdm = MACNFWInt(R)
                 else: 
                     #Mdm = Miso(rho0,sigma0,R)
                     Mdm = sol[1](R)
@@ -983,4 +1020,5 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
+
 
