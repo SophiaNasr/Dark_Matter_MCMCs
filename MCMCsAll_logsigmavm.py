@@ -361,7 +361,7 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,s
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        [rho0start,sigma0start]=rho0sigma0ini(r1,ratio,rhoACNFW_val)
+        [rho0start,sigma0start]=rho0sigma0ini(alphastart,r1,ratio,rhoACNFW_val)
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
