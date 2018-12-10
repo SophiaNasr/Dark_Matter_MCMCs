@@ -301,10 +301,9 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,s
     def Findr1(R):
         return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
     try:
-        #r1 = opt.brentq(Findr1,Rmin,Rmax,maxiter=150)
-        r1 = opt.brentq(Findr1,r200_val,500.,maxiter=150)
-        #if r1 >= r200_val:
-        #    success=False
+        r1 = opt.brentq(Findr1,Rmin,Rmax,maxiter=150)
+        if r1 >= r200_val:
+            success=False
     except:
         success=False
     
