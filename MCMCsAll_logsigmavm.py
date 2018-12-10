@@ -398,7 +398,7 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
 
     vel=(4./np.sqrt(np.pi))*sigma0
     xsctn=sigmavm/vel
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,r200_val,vel,success]
+    return [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,alphastart,success]
 
 
 # In[ ]:
