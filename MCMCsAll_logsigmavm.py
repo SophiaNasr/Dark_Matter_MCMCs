@@ -321,7 +321,7 @@ def rho0sigma0ini(alphastart,r1,ratioNFW,rhoACNFW_val):
 # In[ ]:
 
 
-def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,r1,success):
+def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alphastart,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
