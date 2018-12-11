@@ -891,7 +891,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
-    ndim=5 #=len(params)
+    ndim=6 #=len(params)
     initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),0.]
     paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),5.])
     #_____Starting points for walkers_____
