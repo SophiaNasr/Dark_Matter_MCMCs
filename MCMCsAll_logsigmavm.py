@@ -724,6 +724,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
     kappabar=1.
     r1=1.
     r200_val=1.
+    alpha=1.
     ChiSqTot=np.inf
     lnprob=-np.inf
     
