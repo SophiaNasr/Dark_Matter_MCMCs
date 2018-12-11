@@ -4,6 +4,12 @@
 # In[ ]:
 
 
+# %load MCMCsAll_logsigmavm_r1alpha.py
+
+
+# In[ ]:
+
+
 # %load MCMCsAll_logsigmavm.py
 import os,sys
 import numpy as np
@@ -323,11 +329,11 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
         return Y*MbInt[galnum](R)
     
     #_____AC NFW profile_____
-    def rhoACNFW(M200,c,R):
-        return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0]
-    def MACNFW(M200,c,R):
-        return ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1]
-    #[rhosval,rsval] = [rhos(z,c),rs(z,M200,c)]
+    rhoACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0] for R in Rvals])
+    rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='cubic',fill_value='extrapolate')
+    
+    MACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1] for R in Rvals])
+    MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
 
     # dummy default values
     rhoACSIDMInt=1.
@@ -335,21 +341,18 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
 
     r200_val=r200(z,M200,c)
 
-    #_____Isothermal profile_____
-    def Findr1(R):
-        return (rhoACNFW(M200,c,R)-1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage))**2.
-    r1start=10.
-    r1=opt.fsolve(Findr1,r1start)[0] #default: ,xtol=10.**(-3.), xtol=1.49012e-08
-    if r1 >= r200_val:
-        success=False
-    
+    #_____Find r1_____
+    #Inverse function
+    R_rhoACNFWInt=interp1d(rhoACNFWvals,Rvals,kind='cubic',fill_value='extrapolate')
+    rhoACNFWr1=1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage)
+    r1=R_rhoACNFWInt(rhoACNFWr1)
     
     #_____ACSIDM profile__________
 
     #if ratio > 0.5: #MatchingSuccess=ratio>0.5&&ratio<Log[$MaxNumber]
     if success:
-        rhoACNFW_val=rhoACNFW(M200,c,r1)
-        MACNFW_val=MACNFW(M200,c,r1)
+        rhoACNFW_val=rhoACNFWInt(r1)
+        MACNFW_val=MACNFWInt(r1)
         ratio = MACNFW_val/(4.*np.pi*rhoACNFW_val*r1**3.)
         def Findrho0sigma0(rho0sigma0):
             [rho0,sigma0] = rho0sigma0
@@ -358,7 +361,6 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        #[rho0start,sigma0start]=[10.**7.5,580.]
         [rho0start,sigma0start]=rho0sigma0ini(alphastart,r1,ratio,rhoACNFW_val)
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
@@ -375,14 +377,16 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
         try:
             def rhoACSIDM(R):
                 if R > r1:
-                    rhodm = rhoACNFW(M200,c,R)
+                    #rhodm = rhoACNFW(M200,c,R)
+                    rhodm = rhoACNFWInt(R)
                 else: 
                     #rhodm = rhoiso(rho0,sigma0,R)
                     rhodm = sol[0](R)
                 return rhodm 
             def MACSIDM(R):
                 if R > r1:
-                    Mdm = MACNFW(M200,c,R)
+                    #Mdm = MACNFW(M200,c,R)
+                    Mdm = MACNFWInt(R)
                 else: 
                     #Mdm = Miso(rho0,sigma0,R)
                     Mdm = sol[1](R)
@@ -887,7 +891,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
-    ndim=5 #=len(params)
+    ndim=6 #=len(params)
     initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),0.]
     paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),5.])
     #_____Starting points for walkers_____
@@ -901,7 +905,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     formatter.append('%d')
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [3,4,-10,-9,-6]] for i in range(nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,-10,-9,-6,-5]] for i in range(nwalkers)])
     print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
@@ -1030,4 +1034,5 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
+
 
