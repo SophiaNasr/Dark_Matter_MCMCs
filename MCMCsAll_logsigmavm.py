@@ -338,6 +338,7 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
     # dummy default values
     rhoACSIDMInt=1.
     MtotInt=1.
+    alpha=1.
 
     r200_val=r200(z,M200,c)
 
@@ -400,7 +401,7 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
 
     vel=(4./np.sqrt(np.pi))*sigma0
     xsctn=sigmavm/vel
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,r200_val,vel,alphastart,success]
+    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,r200_val,vel,alphastart,alpha,success]
 
 
 # In[ ]:
@@ -735,7 +736,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         success=False
     #_____ACSIDM profile_____
     if success:
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,alphastart,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alphastart,success)
+        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,alphastart,alpha,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alphastart,success)
         if xsctn < 0. or xsctn > 10.:
             success=False
     if success:
@@ -764,7 +765,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile):
         prob=np.exp(-ChiSqTot/2.)*sigmavm
         lnprob=np.log(prob)
 
-    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,log10alphastart,alphastart,xsctn,ChiSqTot,success]]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,log10alphastart,alphastart,alpha,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
 
@@ -885,7 +886,7 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace):
 
 def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
-    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10alphastart","alphastart","xsctn","ChiSqTot","success"]]
+    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10alphastart","alphastart","alpha","xsctn","ChiSqTot","success"]]
     #header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
     #header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
     header=np.array(list(itertools.chain.from_iterable(header)))
@@ -907,7 +908,7 @@ def MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples
     formatter.append('%d')
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [3,4,-10,-9,-6,-5]] for i in range(nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,-11,-10,-7,-6]] for i in range(nwalkers)])
     print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
