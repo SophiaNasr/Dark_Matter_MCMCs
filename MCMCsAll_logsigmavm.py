@@ -315,7 +315,7 @@ def rho0sigma0ini(alphastart,r1,ratioNFW,rhoACNFW_val):
     rho1=rhoACNFW_val
     rho0=rho1*np.exp(-h(alpha)(r1))
     sigma0=np.sqrt((4.*np.pi*G*rho0)/alpha)
-    return [rho0,sigma0]
+    return [alpha,rho0,sigma0]
 
 
 # In[ ]:
@@ -361,7 +361,9 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,Y,M200,c,sigmavm,rho0,sigma0,alph
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        [rho0start,sigma0start]=rho0sigma0ini(alphastart,r1,ratio,rhoACNFW_val)
+        [alpha,rho0start,sigma0start]=rho0sigma0ini(alphastart,r1,ratio,rhoACNFW_val)
+        if alpha<10.**(-5.) or alpha>10.**5.:
+            success=False
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
