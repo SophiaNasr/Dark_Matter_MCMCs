@@ -42,7 +42,7 @@ parser.add_argument("--data", help="Group data or simulation data",type=str,requ
 parser.add_argument("--parameter-space", help="Parameters to scan over, either [M200,c,sigmavm] or [rho0,sigma0,sigmavm]",type=str,nargs="+",required=True,choices=['M200csigmavm','rho0sigma0sigmavm'])
 parser.add_argument("--groups", help="Groups included in run",nargs="+",type=int,required=True,choices=range(16))
 parser.add_argument("--profiles", help="Profiles included in run",nargs="+",type=str,required=True,choices=['NFW','Bl','Gn'])
-parser.add_argument("--coregrowingcollapse", help="Select core growing or core collapse solution",nargs="+",type=str,required=True,choices=['CoreGrowing','CoreCollapse'])
+parser.add_argument("--coregrowingcollapse", help="Select core growing or core collapse solution",type=str,required=True,choices=['CoreGrowing','CoreCollapse'])
 parser.add_argument("--burn-ins", help="set number of burn-in runs. Default is 5",default=5,type=int)
 parser.add_argument("--nwalkers", help="set number of walkers. Default is 224.",default=224,type=int)
 parser.add_argument("--burn-in-samples", help="set number of samples for burn-in runs. Default is 50.",default=50,type=int)
