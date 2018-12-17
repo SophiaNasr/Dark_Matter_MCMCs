@@ -1,3 +1,10 @@
+
+# coding: utf-8
+
+# In[139]:
+
+
+# %load MCMCsAll_logsigmavm.py
 import os,sys
 import numpy as np
 import pandas as pd #for loading csv Excel files
@@ -17,6 +24,10 @@ import argparse
 from multiprocessing import Pool
 
 start = time.time()
+
+
+# In[8]:
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", help="Group data or simulation data",type=str,required=True,choices=['groupsdata','simsdata'])
@@ -48,6 +59,10 @@ if not os.path.isdir(output_dir):
 
 print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList))
 print("Data is "+str(data)+", and parameter space is "+str(parameterspaceList))
+
+
+# In[10]:
+
 
 # # Constants
 
@@ -156,11 +171,11 @@ MSersicNoGradInt=[interp1d(MSersicNoGradTab[i][:,0],MSersicNoGradTab[i][:,1], ki
 rvals=np.array([MSersicGradTab[0][:,0][i] for i in range(1,len(MSersicGradTab[0][:,0])-1)]) #Range of r such that FindRoot[...] works
 [rmin,rmax]=[rvals[0],rvals[-1]]  
 #print(rvals)
-print([rmin,rmax])
+#print([rmin,rmax])
 
 Rvals = np.array([rvals[l] for l in range(0,len(rvals))]) #range for the ACSIDM mass and density profiles
 [Rmin,Rmax]=[Rvals[0],Rvals[-1]]  
-print([Rmin,Rmax])
+#print([Rmin,Rmax])
 
 
 # ### Stellar density profiles for simulation data
@@ -273,40 +288,10 @@ def IsothermalProfileInt(galnum,Y,rho0,sigma0):
     return [rhoiso,Miso]
 
 
-# In[ ]:
+# In[109]:
 
 
-def rho0sigma0ini(alphastart,r1,ratioNFW,rhoACNFW_val):
-    #_____Isothermal profile in terms of h(r)_____
-    def h(alpha):
-        def hr(y,r):
-            [h,dhdr]=y
-            d2hdr2=-(2.*dhdr)/r-alpha*np.exp(h)
-            return [dhdr,d2hdr2]
-        y0 = [0.0, -(alpha*rmin)/3.] #initial conditions at r=rmin
-        y = odeint(hr,y0,rvals,full_output=0) #full_output=True
-        hInt=interp1d(rvals,y[:,0], kind='cubic',fill_value='extrapolate')
-        dhdr_exphr_Int=interp1d(rvals,y[:,1]/np.exp(y[:,0]), kind='cubic',fill_value='extrapolate')
-        return [hInt,dhdr_exphr_Int]
-
-    #_____Find root_____
-    def diffratio(alpha):
-        [hInt,dhdr_exphr_Int]=h(alpha)
-        ratio=-(1./(alpha*r1))*dhdr_exphr_Int(r1)
-        return ratio-ratioNFW
-    #alphastart=0.01
-    alpha=opt.fsolve(diffratio,alphastart)[0] #default: xtol=1.49012e-08 #xtol=10.**(-3.)
-    #_____[rho0,sigma0]_____
-    rho1=rhoACNFW_val
-    rho0=rho1*np.exp(-h(alpha)[0](r1))
-    sigma0=np.sqrt((4.*np.pi*G*rho0)/alpha)
-    return [alpha,rho0,sigma0]
-
-
-# In[ ]:
-
-
-def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0,sigma0,alphastart,success):
+def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
@@ -321,10 +306,8 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigm
     MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
 
     # dummy default values
+    MtotACSIDMInt=1.
     rhoACSIDMInt=1.
-    MtotInt=1.
-    alpha=1.
-
     DeltaU=0.
 
     r200_val=r200(z,M200,c)
@@ -349,9 +332,6 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigm
             equation1 = M1/(4.*np.pi*r1**3.) - ratio*rho1
             equation2 = rhoACNFW_val - rho1
             return [equation1,equation2]
-        [alpha,rho0start,sigma0start]=rho0sigma0ini(alphastart,r1,ratio,rhoACNFW_val)
-        #if alpha<10.**(-5.) or alpha>10.**5.:
-        #    success=False
         [rho0,sigma0] = abs(opt.fsolve(Findrho0sigma0,[rho0start,sigma0start],xtol=10.**(-5.))) #default: xtol=1.49012e-08
         sol=IsothermalProfileInt(galnum,Y,rho0,sigma0)
         [rho1,M1]=[sol[0](r1),sol[1](r1)]
@@ -381,17 +361,14 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigm
                     #Mdm = Miso(rho0,sigma0,R)
                     Mdm = sol[1](R)
                 return Mdm
+            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
             rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MtotInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MACSIDMInt=interp1d(Rvals,[MACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
             #_____CoreGrowingCollapse_____
-            #Potential Phi(R)
-            def Phiintegrand(R,func):
-                return func(R)/R*2.
-            PhiACNFW=integrate.quad(Phiintegrand,Rmax,Rmin,args=(MACNFWInt),limit=200)[0]
-            PhiACSIDM=integrate.quad(Phiintegrand,Rmax,Rmin,args=(MACSIDMInt),limit=200)[0]
-            #Potential energy U(R)=m1*Phi(R) for R=Rmin (maximum change), and for test mass m1=1.
-            DeltaU=PhiACSIDM-PhiACNFW 
+            def DeltaUintegrand(R):
+                integrand = ((MtotACSIDMInt(R))**2.-(MtotACNFWInt(R))**2.)/R**2.
+                return integrand
+            DeltaU=-(G/2.)*integrate.quad(DeltaUintegrand,Rmin,r1,limit=200)[0] #,limit=200
             #Core growing: DeltaU > 0
             if CoreGrowingCollapse == 'CoreGrowing' and DeltaU<0:
                 success=False
@@ -404,7 +381,11 @@ def ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigm
     vel=(4./np.sqrt(np.pi))*sigma0
     xsctn=sigmavm/vel
 
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,xsctn,r200_val,vel,alphastart,alpha,DeltaU,success]
+    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),np.log10(rho0start),np.log10(sigma0start),r1,sigmavm,xsctn,r200_val,vel,DeltaU,success]
+
+
+# In[105]:
+
 
 #_____x1=r1/rs_____
 x1vals=np.logspace(-3., 10., 1500, endpoint=True)
@@ -416,7 +397,11 @@ x1Int=interp1d(Ratiovals,x1vals, kind='cubic', fill_value='extrapolate')
 def X1(ratio):
     return x1Int(ratio)
 
-def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success):
+
+# In[122]:
+
+
+def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success):
     #_____Group properties_____
     z = zvals[galnum]
     def Mb(R):
@@ -431,7 +416,8 @@ def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c
 
     # dummy default values
     rhoACSIDMInt=1.
-    MtotInt=1.
+    MtotACSIDMInt=1.
+    DeltaU=0.
     r200_val=1.
     
     #_____Isothermal profile_____
@@ -443,18 +429,6 @@ def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c
         #return interp1d(rvals,sol[:,1], kind='cubic', fill_value='extrapolate')(R)
         return sol[1](R)
     
-    def rhoACSIDM(M200,c,r1,R):
-        if R > r1:
-            rhodm = rhoACNFW(M200,c,R)
-        else: 
-            rhodm = rhoiso(R)
-        return rhodm 
-    def MACSIDM(M200,c,r1,R):
-        if R > r1:
-            Mdm = MACNFW(M200,c,R)
-        else: 
-            Mdm = Miso(R)
-        return Mdm 
     
     xsctnmin=1./(MSun_in_g*sigma0*km_in_kpc*(4./np.sqrt(np.pi))*cm_in_kpc**2.*tage*rhoiso(Rmin))
     xsctnmax=1./(MSun_in_g*sigma0*km_in_kpc*(4./np.sqrt(np.pi))*cm_in_kpc**2.*tage*rhoiso(Rmax))
@@ -502,11 +476,47 @@ def ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c
         success=False
     if success:
         try:
+            #_____AC NFW profile_____
+            rhoACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0] for R in Rvals])
+            rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='cubic',fill_value='extrapolate')
+    
+            MACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1] for R in Rvals])
+            MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
+            #_____AC SIDM profile_____
+            def rhoACSIDM(M200,c,r1,R):
+                if R > r1:
+                    #rhodm = rhoACNFW(M200,c,R)
+                    rhodm = rhoACNFWInt(R)
+                else: 
+                    rhodm = rhoiso(R)
+                return rhodm 
+            def MACSIDM(M200,c,r1,R):
+                if R > r1:
+                    #Mdm = MACNFW(M200,c,R)
+                    Mdm = MACNFWInt(R)
+                else: 
+                    Mdm = Miso(R)
+                return Mdm 
+            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(M200,c,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
             rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200,c,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MtotInt=interp1d(Rvals,[MACSIDM(M200,c,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            #_____CoreGrowingCollapse_____
+            def DeltaUintegrand(R):
+                integrand = ((MtotACSIDMInt(R))**2.-(MtotACNFWInt(R))**2.)/R**2.
+                return integrand
+            DeltaU=-(G/2.)*integrate.quad(DeltaUintegrand,Rmin,r1,limit=200)[0] #,limit=200
+            #Core growing: DeltaU > 0
+            if CoreGrowingCollapse == 'CoreGrowing' and DeltaU<0:
+                success=False
+            # Core collapse: DeltaU < 0
+            if CoreGrowingCollapse == 'CoreCollapse' and DeltaU>0:
+                success=False
         except:
             success=False
-    return [MtotInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,r200_val,success]   
+    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,r200_val,DeltaU,success]   
+
+
+# In[125]:
 
 
 # # Mean convergence kappabar
@@ -662,7 +672,7 @@ def SeeingBinned(galnum,func):
     return output
 
 Sigmastars_seeing_binned_vals=np.array([SeeingBinned(galnumber,Sigmastars(galnumber)) for galnumber in range(0,len(names))])
-print(Sigmastars_seeing_binned_vals)
+#print(Sigmastars_seeing_binned_vals)
 
 
 def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
@@ -680,6 +690,9 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
 # In[ ]:
 
 
+# In[128]:
+
+
 # # Set up MCMCs
 
 # ## Logarithm of probability: lnprob
@@ -688,14 +701,15 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
 #params has to be the first entry in lnprob to make emcee work
 #def lnprob(params,galnum,DMprofile,CoreGrowingCollapse):
 def lnprobM200csigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
-    [log10Y,beta,log10M200,log10c,log10sigmavm,log10alphastart]=params
+    [log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]=params
     success=True
     #_____Free parameters_____ 
     Y=10.**log10Y
     M200=10.**log10M200
     c=10.**log10c
     sigmavm=10.**log10sigmavm
-    alphastart=10.**log10alphastart
+    rho0start=10.**log10rho0start
+    sigma0start=10.**log10sigma0start
     #_____Group properties_____ 
     z = zvals[galnum]
     kappabarobs=kappabarobsvals[galnum]
@@ -712,7 +726,9 @@ def lnprobM200csigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
     vel=1.
     sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
     log10rho0=1.
+    log10rho0start=log10rho0
     log10sigma0=np.log10(sigma0)
+    log10sigma0start=log10sigma0
     xsctn=1.
     prob=0.
     ChiSqDisp=np.inf
@@ -734,15 +750,12 @@ def lnprobM200csigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
         success=False
     elif sigmavm < 0.: 
         success=False
-    elif alphastart<10.**(-5.) or alphastart>10.**5.:
-        success=False
        
     #_____ACSIDM profile_____
     if success:
-
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,xsctn,r200_val,vel,alphastart,alpha,DeltaU,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0,sigma0,alphastart,success)
-        if xsctn < 0. or xsctn > 10.:
-            success=False
+        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,log10rho0start,log10sigma0start,r1,sigmavm,xsctn,r200_val,vel,DeltaU,success]=ACSIDMProfileM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success)
+        #if xsctn < 0. or xsctn > 10.:
+        #    success=False
     if success:
         #_____\chi^2 lensing_____ 
         kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
@@ -759,7 +772,7 @@ def lnprobM200csigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
         log10cerror=0.15 #error estimate
         ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
         #_____\chi^2 velocity dispersion_____
-        sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
+        sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotACSIDMInt,beta)
         ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
         #_____\chi^2 M/L ratio close to Salpeter_____ 
         log10YSPSerror=0.1 #error estimate
@@ -769,12 +782,15 @@ def lnprobM200csigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
         prob=np.exp(-ChiSqTot/2.)*sigmavm
         lnprob=np.log(prob)
 
-    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,log10alphastart,alphastart,alpha,DeltaU,xsctn,ChiSqTot,success]]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,log10rho0start,log10sigma0start,DeltaU,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
 
 
-def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
+# In[146]:
+
+
+def lnprobrho0sigma0sigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
     [log10Y,beta,log10rho0,log10sigma0,log10sigmavm]=params
     success=True
     #_____Free parameters_____ 
@@ -809,6 +825,8 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
     kappabar=1.
     r1=1.
     r200_val=1.
+    
+    DeltaU=0.
     ChiSqTot=np.inf
     lnprob=-np.inf
 
@@ -820,11 +838,11 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
         success=False
     elif sigmavm < 0.: 
         success=False
-    elif xsctn < 0. or xsctn > 10.:
-        success=False
+    #elif xsctn < 0. or xsctn > 10.:
+    #    success=False
     if success: 
         #_____ACSIDM profile_____
-        [MtotInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,r200_val,success]=ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
+        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,r200_val,DeltaU,success]=ACSIDMProfilerho0sigma0sigmavm(galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
         #_____\chi^2 lensing_____
         if success:
             kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
@@ -841,7 +859,7 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
             log10cerror=0.15 #error estimate
             ChiSqMass=(log10M200-log10M200obs)**2./log10M200error**2.+(log10c-log10cNFW)**2/log10cerror**2
             #_____\chi^2 velocity dispersion_____
-            sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotInt,beta)
+            sigmaLOS=sigmaLOS_seeing_binned(galnum,MtotACSIDMInt,beta)
             ChiSqDisp=np.sum([(sigmaLOS[i]-sigmaLOSobs[i])**2./sigmaLOSerror[i]**2. for i in range(0,len(sigmaLOS))])
             #_____\chi^2 M/L ratio close to Salpeter_____ 
             log10YSPSerror=0.1 #error estimate
@@ -851,11 +869,13 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile):
             prob=np.exp(-ChiSqTot/2.)*sigmavm
             lnprob=np.log(prob)
 
-    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,xsctn,ChiSqTot,success]]
+    blobs=[[log10rho0,log10sigma0,np.log10(xsctn),log10Y,beta,prob,ChiSqDisp,ChiSqLensing,ChiSqMass],[sigmaLOS[i] for i in range(len(sigmaLOSobs))],[kappabar,r1,r200_val,log10M200,log10c,vel,sigmavm,log10sigmavm,DeltaU,xsctn,ChiSqTot,success]]
     flatblobs=np.array(list(itertools.chain.from_iterable(blobs)))
     return lnprob, flatblobs
 
-# ## Find random initial points for walkers
+
+# In[144]:
+
 
 # ## Find random initial points for walkers
 
@@ -888,25 +908,27 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,CoreGrowingC
                 continue
             else:
                 chainsini.append(blobs)
-                print(blobs)
+                #print(blobs)
     return np.array(chainsini)
+
+
+# In[148]:
+
 
 # ## Module to run MCMCs
 
 def MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
-
-    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10alphastart","alphastart","alpha","DeltaU","xsctn","ChiSqTot","success"]]
-    #header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
-    #header=['log10Y', 'beta', 'log10M200', 'log10c','log10rho0','log10sigma0','r1','sigmavm','xsctn', 'Chi2']
+    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10rho0start","log10sigma0start","DeltaU","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun
     filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
-    ndim=6 #=len(params)
-    initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),0.]
-    paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),5.])
+    ndim=7 #=len(params)
+    #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+    initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
+    paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
     #_____Starting points for walkers_____
     #Starting point p0 for each of the walkers:
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -918,7 +940,7 @@ def MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsam
     formatter.append('%d')
     np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [3,4,-12,-11,-8,-7]] for i in range(nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,-11,-10,-7,-6,-5]] for i in range(nwalkers)])
     print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
@@ -958,17 +980,20 @@ def MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsam
     print('Bestfitparams_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat exported.')
     return 'Done.'
 
+
+# In[151]:
+
+
 def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
-    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","xsctn","ChiSqTot","success"]]
-    #header=['log10Y', 'beta', 'log10M200', 'log10c', 'log10rho0', 'log10sigma0','r1', 'sigmavm','xsctn', 'Chi2']
-    #header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","xsctn","ChiSqTot","success"]]
+    header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","DeltaU","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
     chainlength = nwalkers*nsamples_finalrun   
-    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
+    filename=str(names[galnum])+'_SersicDelUps015_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=5 #=len(params)
+    #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
     initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
     paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
     #_____Starting points for walkers_____
@@ -976,13 +1001,14 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
     #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)])
     starting_point_start = time.time()
-    chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,parspace)
+    chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,CoreGrowingCollapse,parspace)
     print(chainsini)
     formatter=['%.18e' for x in range(len(header)-1)]
     formatter.append('%d')
-    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini,header=str(header),fmt=formatter)
+    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
     print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    p0=np.array([[chainsini[i][j] for j in [3,4,0,1,-4]] for i in range(nwalkers)])
+    p0=np.array([[chainsini[i][j] for j in [3,4,0,1,-5]] for i in range(nwalkers)])
+    print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
@@ -998,8 +1024,8 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
             runname='finalrun'
         with Pool() as pool:
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile), pool=pool)
-            paramsini_tmp, lnprobvals, state, blobstmp = sampler.run_mcmc(paramsini,nsamples) 
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobrho0sigma0sigmavm, args=(galnum,DMprofile,CoreGrowingCollapse), pool=pool)
+            paramsini_tmp,lnprobval,state,blobstmp=sampler.run_mcmc(paramsini,nsamples)
             paramsini=paramsini_tmp
             blobs=sampler.get_blobs(flat=True)
             accfrac=np.mean(sampler.acceptance_fraction)
@@ -1020,6 +1046,10 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
     np.savetxt(output_dir+'Bestfitparams_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat',bestfit)
     print('Bestfitparams_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat exported.')
     return 'Done.'
+
+
+# In[ ]:
+
 
 for parameter_space in parameterspaceList:
     for galnum in galnumvals:
@@ -1046,3 +1076,4 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
+
