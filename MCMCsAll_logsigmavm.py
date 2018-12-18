@@ -880,7 +880,7 @@ def lnprobrho0sigma0sigmavm(params,galnum,DMprofile,CoreGrowingCollapse):
 # ## Find random initial points for walkers
 
 def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,CoreGrowingCollapse,parspace):
-    print('Determine starting points for walkers:')
+    #print('Determine starting points for walkers:')
     #_____Starting points for walkers_____
     params = initialparams
     initpoint=True
@@ -912,6 +912,40 @@ def walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,CoreGrowingC
     return np.array(chainsini)
 
 
+# In[ ]:
+
+
+def Findseed(npoints,galnum,DMprofile,CoreGrowingCollapse,parspace):
+    print('Determine seed point:')
+    nwalkers=npoints #number of points from which maximum cross section is selected
+    if parspace=='M200csigmavm':
+        #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+        #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10((4./np.sqrt(np.pi))*580.*10.),np.log10(10**7.5),np.log10(580.)]
+        initialparams=[3.12265486e-01,2.66433127e-02,1.38262737e+01,7.31477073e-01,4.14020512e+00,8.60636108e+00,3.14005987e+00]
+        #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
+        paramserrors=np.array([0.01,0.05,2.,0.5,0.1,1.2,0.25])
+    if parspace=='rho0sigma0sigmavm':
+        #Same params as before
+        initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
+        paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
+    #Dummy variable to start while loop
+    xsctnmax=0.
+    while xsctnmax < 10.:
+        chainsini=walkersini(initialparams,paramserrors,nwalkers,galnum,DMprofile,CoreGrowingCollapse,parspace)
+        xsctnvals=chainsini[:,-3]
+        xsctnmax=max(xsctnvals)
+        print('xsctnmax='+str(xsctnmax))
+        if xsctnmax < 10.:
+            continue
+        else:
+            imax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmax)))[0]
+            if parspace=='M200csigmavm':
+                seedparams=np.array([chainsini[imax][j] for j in [3,4,-11,-10,-7,-6,-5]])
+            if parspace=='rho0sigma0sigmavm':
+                seedparams=np.array([chainsini[imax][j] for j in [3,4,0,1,-5]])
+    return [seedparams, paramserrors]
+
+
 # In[148]:
 
 
@@ -926,11 +960,15 @@ def MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsam
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=7 #=len(params)
+    #_____Determine seed point_____
+    print('Determine seed point:')
     #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-    initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
-    paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
+    #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
+    #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
+    npoints=5
+    [initialparams, paramserrors]=Findseed(npoints,galnum,DMprofile,CoreGrowingCollapse,parspace)
     #_____Starting points for walkers_____
-    #Starting point p0 for each of the walkers:
+    print('Determine starting points for walkers:')
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
     #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)])
     starting_point_start = time.time()
