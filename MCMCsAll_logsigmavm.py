@@ -923,11 +923,14 @@ def Findseed(npoints,galnum,DMprofile,CoreGrowingCollapse,parspace):
         #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10((4./np.sqrt(np.pi))*580.*10.),np.log10(10**7.5),np.log10(580.)]
         initialparams=[3.12265486e-01,2.66433127e-02,1.38262737e+01,7.31477073e-01,4.14020512e+00,8.60636108e+00,3.14005987e+00]
         #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-        paramserrors=np.array([0.01,0.05,2.,0.5,0.1,1.2,0.25])
+        #paramserrors=np.array([0.01,0.05,2.,0.5,0.1,1.2,0.25])
+        #paramserrors=np.array([0.01,0.05,2.,0.5,0.1,1.2,0.25])
+        paramserrors=[0.1 for i in range(0,len(initialparams))]
     if parspace=='rho0sigma0sigmavm':
         #Same params as before
         initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
-        paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
+        #paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
+        paramserrors=[0.1 for i in range(0,len(initialparams))]
     #Dummy variable to start while loop
     xsctnmax=0.
     while xsctnmax < 10.:
