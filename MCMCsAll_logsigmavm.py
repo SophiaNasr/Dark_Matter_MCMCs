@@ -34,7 +34,7 @@ parser.add_argument("--data", help="Group data or simulation data",type=str,requ
 parser.add_argument("--parameter-space", help="Parameters to scan over, either [M200,c,sigmavm] or [rho0,sigma0,sigmavm]",type=str,nargs="+",required=True,choices=['M200csigmavm','rho0sigma0sigmavm'])
 parser.add_argument("--groups", help="Groups included in run",nargs="+",type=int,required=True,choices=range(16))
 parser.add_argument("--profiles", help="Profiles included in run",nargs="+",type=str,required=True,choices=['NFW','Bl','Gn'])
-parser.add_argument("--coregrowingcollapse", help="Select core growing or core collapse solution",type=str,required=True,choices=['CoreGrowing','CoreCollapse'])
+parser.add_argument("--coregrowingcollapse", help="Select core growing or core collapse solution",type=str,nargs="+",required=True,choices=['CoreGrowing','CoreCollapse'])
 parser.add_argument("--burn-ins", help="set number of burn-in runs. Default is 5",default=5,type=int)
 parser.add_argument("--nwalkers", help="set number of walkers. Default is 224.",default=224,type=int)
 parser.add_argument("--burn-in-samples", help="set number of samples for burn-in runs. Default is 50.",default=50,type=int)
@@ -46,7 +46,7 @@ data=args.data #args.data
 parameterspaceList=args.parameter_space #args.parameter_space
 galnumvals=args.groups
 DMprofileList=args.profiles
-CoreGrowingCollapse=args.coregrowingcollapse
+CoreGrowingCollapseList=args.coregrowingcollapse
 burnin_val=args.burn_ins
 nwalker_val=args.nwalkers
 burnin_samples=args.burn_in_samples
@@ -984,7 +984,7 @@ def MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsam
 # In[151]:
 
 
-def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
+def MCMCrho0sigma0sigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
     #_____MCMC properties_____
     header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","DeltaU","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
@@ -1054,24 +1054,25 @@ def MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsa
 for parameter_space in parameterspaceList:
     for galnum in galnumvals:
         for DMprofile in DMprofileList:
-            #_____Number of burn-in runs_____
-            nburnins=burnin_val
-            #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
-            nwalkers=nwalker_val
-            #_____Chain lengths_____
-            nsamples_burnin = burnin_samples
-            nsamples_finalrun = full_samples
-            #_____Print properties of MCMCs_____
-            burninlength = nwalkers*nsamples_burnin
-            chainlength = nwalkers*nsamples_finalrun
-            print(str(names[galnum])+': ')
-            print('Burn in: nburnins='+str(nburnins)+', burninlength='+str(burninlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_burnin]))
-            print('Final run: chainlength='+str(chainlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_finalrun]))
-            #_____Run MCMCs____
-            if parameter_space=='M200csigmavm':
-                print(MCMCM200csigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
-            elif parameter_space=='rho0sigma0sigmavm':
-                print(MCMCrho0sigma0sigmavm(galnum,DMprofile,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
+            for CoreGrowingCollapse in CoreGrowingCollapseList:
+                #_____Number of burn-in runs_____
+                nburnins=burnin_val
+                #_____Number of walkers (must be the same for burn in and finalrun because of the set up of the initial conditions)
+                nwalkers=nwalker_val
+                #_____Chain lengths_____
+                nsamples_burnin = burnin_samples
+                nsamples_finalrun = full_samples
+                #_____Print properties of MCMCs_____
+                burninlength = nwalkers*nsamples_burnin
+                chainlength = nwalkers*nsamples_finalrun
+                print(str(names[galnum])+': ')
+                print('Burn in: nburnins='+str(nburnins)+', burninlength='+str(burninlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_burnin]))
+                print('Final run: chainlength='+str(chainlength)+', [nwalkers,nsamples]='+str([nwalkers,nsamples_finalrun]))
+                #_____Run MCMCs____
+                if parameter_space=='M200csigmavm':
+                    print(MCMCM200csigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
+                elif parameter_space=='rho0sigma0sigmavm':
+                    print(MCMCrho0sigma0sigmavm(galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
 end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
