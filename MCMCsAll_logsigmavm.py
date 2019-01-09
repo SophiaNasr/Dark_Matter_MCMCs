@@ -59,7 +59,7 @@ output_dir="./MCMC_results/"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+", Solutions: "+str(CoreGrowingCollapseList)", Sersic profiles: "+str(GradNoGradList))
+print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+", Solutions: "+str(CoreGrowingCollapseList)+", Sersic profiles: "+str(GradNoGradList))
 print("Data is "+str(data)+", and parameter space is "+str(parameterspaceList))
 
 
