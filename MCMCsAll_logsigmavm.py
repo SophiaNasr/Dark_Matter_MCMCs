@@ -59,7 +59,7 @@ output_dir="./MCMC_results/"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+", Solutions: "+str(CoreGrowingCollapseList)+", Sersic profiles: "+str(GradNoGradList))
+print("Running Galaxy Numbers: "+str(galnumvals)+", DM Profiles: "+str(DMprofileList)+", Solutions: "+str(CoreGrowingCollapseList)", Sersic profiles: "+str(GradNoGradList))
 print("Data is "+str(data)+", and parameter space is "+str(parameterspaceList))
 
 
@@ -979,7 +979,7 @@ def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
         paramserrors=[0.1 for i in range(0,len(initialparams))]
     if parspace=='rho0sigma0sigmavm':
         #Same params as before
-        initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
+        initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*10.)]
         #paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
         paramserrors=[0.1 for i in range(0,len(initialparams))]
     #_____CoreGrowingCollapse_____ 
