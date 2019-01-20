@@ -1128,11 +1128,7 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
     #npoints=5
     #[initialparams,paramserrors]=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-    #_____Rounded best fit parameters for CSWA6 NFW from previous runs_____
-    if CoreGrowingCollapse == 'CoreGrowing':
-        initialparams=[0.4,0.0,14.,0.8,10.,2.5,1.5] #Ok.
-    if CoreGrowingCollapse == 'CoreCollapse':
-        initialparams=[0.4,0.0,14.,0.8,9.,2.5,4.] #Ok.
+    initialparams=np.loadtxt('Initialparams/Initialparams_'+str(parspace)+'_log10sigmavm_'+filename+'.dat')
     paramserrors=[0.01 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     print('Determine starting points for walkers:')
