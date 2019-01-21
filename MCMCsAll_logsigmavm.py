@@ -1038,7 +1038,7 @@ def walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,C
 #     initialblobs=chainsini[iminmax]
 #     return initialblobs
 
-# for galnum in range(0,9):
+# for galnum in range(0,10):
 # #for galnum in range(4,5):   
 #     for parspace in ['M200csigmavm','rho0sigma0sigmavm']:
 #     #for parspace in ['M200csigmavm']:
