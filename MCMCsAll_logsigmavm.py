@@ -7,28 +7,6 @@
 # %load MCMCsAll_logsigmavm.py
 
 
-# In[ ]:
-
-
-# %load MCMCsAll_logsigmavm.py
-
-
-# In[ ]:
-
-
-# %load MCMCsAll_logsigmavm.py
-
-
-# In[ ]:
-
-
-# %load MCMCsAll_logsigmavm.py
-
-
-# In[ ]:
-
-
-# %load MCMCsAll_logsigmavm.py
 import os,sys
 import numpy as np
 import pandas as pd #for loading csv Excel files
@@ -748,7 +726,7 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
 #params has to be the first entry in lnprob to make emcee work
 #def lnprob(params,galnum,DMprofile,CoreGrowingCollapse):
 def lnprobM200csigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse):
-    [log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]=params
+    [log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]=params
     success=True
     #_____Free parameters_____ 
     Y=10.**log10Y
@@ -957,215 +935,54 @@ def walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,C
     return np.array(chainsini)
 
 
-# def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
-#     print('Determine seed point:')
-#     nwalkers=npoints #number of points from which maximum cross section is selected
-#     #_____Initial parameters_____ 
-#     if parspace=='M200csigmavm':
-#         #params=[log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]
-#         #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10((4./np.sqrt(np.pi))*580.*10.),np.log10(10**7.5),np.log10(580.)]
-#         #initialparams=[3.12265486e-01,2.66433127e-02,1.38262737e+01,7.31477073e-01,4.14020512e+00,8.60636108e+00,np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-#         #_____Rounded best fit parameters for CSWA6 NFW from previous runs_____
-#         if CoreGrowingCollapse == 'CoreGrowing':
-#             #params=[log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]
-#             #initialparams=[0.45,0.30,13.95,0.85,9.05,3.15,1.50]
-#             initialparams=[0.45,0.0,14.,0.75,9.5,3.,1.5]
-#         if CoreGrowingCollapse == 'CoreCollapse':
-#             #params=[log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]
-#             #initialparams=[0.45,0.08,13.70,0.65,9.30,3.20,4.20]
-#             initialparams=[0.45,0.0,14.,0.75,9.5,3.,4.5]
-#     if parspace=='rho0sigma0sigmavm':
-#         #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#         #Same params as before
-#         #initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
-#         #initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         #paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
-#         #_____Rounded best fit parameters for CSWA6 NFW from previous runs_____
-#         if CoreGrowingCollapse == 'CoreGrowing':
-#             #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#             #initialparams=[0.45,-0.05,9.90,2.65,3.85]
-#             initialparams=[0.45,0.0,9.5,3.,1.5]
-#         if CoreGrowingCollapse == 'CoreCollapse':
-#             #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#             #initialparams=[0.45,-0.03,10.0,2.65,4.20]
-#             initialparams=[0.45,0.0,9.5,3.,4.5]
-#     paramserrors=[0.1 for i in range(0,len(initialparams))]
-#     #_____CoreGrowingCollapse_____ 
-#     #For core growing solutions start with a large cross section
-#     if CoreGrowingCollapse == 'CoreGrowing':
-#         #Dummy variable to start while loop
-#         xsctnmin=15. 
-#         while xsctnmin > 1.:
-#             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmin=min(xsctnvals)
-#             print('xsctnmin='+str(xsctnmin))
-#             if xsctnmin > 1.:
-#                 continue
-#             else:
-#                 imin=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmin)))[0]
-#                 if parspace=='M200csigmavm':
-#                     seedparams=np.array([chainsini[imin][j] for j in [3,4,-11,-10,-7,-6,-5]])
-#                 if parspace=='rho0sigma0sigmavm':
-#                     seedparams=np.array([chainsini[imin][j] for j in [3,4,0,1,-5]])
-#     #For core collapse solutions start with a large cross section
-#     if CoreGrowingCollapse == 'CoreCollapse':
-#         #Dummy variable to start while loop
-#         xsctnmax=1. 
-#         while xsctnmax < 15.:
-#             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmax=max(xsctnvals)
-#             print('xsctnmax='+str(xsctnmax))
-#             if xsctnmax < 15.:
-#                 continue
-#             else:
-#                 imax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmax)))[0]
-#                 if parspace=='M200csigmavm':
-#                     seedparams=np.array([chainsini[imax][j] for j in [3,4,-11,-10,-7,-6,-5]])
-#                 if parspace=='rho0sigma0sigmavm':
-#                     seedparams=np.array([chainsini[imax][j] for j in [3,4,0,1,-5]])
-#     return [seedparams, paramserrors]
-
-
-# def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
-#     print('Determine seed point:')
-#     nwalkers=npoints #number of points from which maximum cross section is selected
-#     #_____parspace_____ 
-#     if parspace=='M200csigmavm':
-#         #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-#         #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10((4./np.sqrt(np.pi))*580.*10.),np.log10(10**7.5),np.log10(580.)]
-#         initialparams=[3.12265486e-01,2.66433127e-02,1.38262737e+01,7.31477073e-01,4.14020512e+00,8.60636108e+00,np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-#         paramserrors=[0.1 for i in range(0,len(initialparams))]
-#     if parspace=='rho0sigma0sigmavm':
-#         #Same params as before
-#         #initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
-#         initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         #paramserrors=np.array([0.1,0.3,1.2,0.25,np.log10(50.)])
-#         paramserrors=[0.1 for i in range(0,len(initialparams))]
-#     #_____CoreGrowingCollapse_____ 
-#     #For core growing solutions start with a large cross section
-#     if CoreGrowingCollapse == 'CoreGrowing':
-#         #Dummy variable to start while loop
-#         xsctnmin=15. 
-#         while xsctnmin > 2.:
-#             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmin=min(xsctnvals)
-#             print('xsctnmin='+str(xsctnmin))
-#             if xsctnmin > 2.:
-#                 continue
-#             else:
-#                 imin=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmin)))[0]
-#                 if parspace=='M200csigmavm':
-#                     seedparams=np.array([chainsini[imin][j] for j in [3,4,-11,-10,-7,-6,-5]])
-#                 if parspace=='rho0sigma0sigmavm':
-#                     seedparams=np.array([chainsini[imin][j] for j in [3,4,0,1,-5]])
-#     #For core collapse solutions start with a large cross section
-#     if CoreGrowingCollapse == 'CoreCollapse':
-#         #Dummy variable to start while loop
-#         xsctnmax=0. 
-#         while xsctnmax < 10.:
-#             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmax=max(xsctnvals)
-#             print('xsctnmax='+str(xsctnmax))
-#             if xsctnmax < 10.:
-#                 continue
-#             else:
-#                 imax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmax)))[0]
-#                 if parspace=='M200csigmavm':
-#                     seedparams=np.array([chainsini[imax][j] for j in [3,4,-11,-10,-7,-6,-5]])
-#                 if parspace=='rho0sigma0sigmavm':
-#                     seedparams=np.array([chainsini[imax][j] for j in [3,4,0,1,-5]])
-#     return [seedparams, paramserrors]
-
-# def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
-#     print('Determine seed point:')
-#     nwalkers=npoints #number of points from which maximum cross section is selected
-#     #_____Seed parameters = rounded best fit parameters for CSWA6 NFW from previous runs_____ 
-#     if parspace=='M200csigmavm':
-#         #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-#         #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10((4./np.sqrt(np.pi))*580.*10.),np.log10(10**7.5),np.log10(580.)]
-#         #initialparams=[3.12265486e-01,2.66433127e-02,1.38262737e+01,7.31477073e-01,4.14020512e+00,8.60636108e+00,np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         if CoreGrowingCollapse == 'CoreGrowing':
-#             #params=[log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]
-#             seedparams=[0.4,0.0,14.,0.8,10.,3.,1.5] #Ok for all groups.
-#         if CoreGrowingCollapse == 'CoreCollapse':
-#             #params=[log10Y,beta,log10M200,log10c,log10rho0start,log10sigma0start,log10sigmavm]
-#             seedparams=[0.4,0.0,14.,0.8,10.,3.,4.3] #Ok
-#     if parspace=='rho0sigma0sigmavm':
-#         #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#         #Same params as before
-#         #initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*1.5)]
-#         #initialparams=[np.log10(2.1),0.,np.log10(10**7.5),np.log10(580.),np.log10((4./np.sqrt(np.pi))*580.*10.)]
-#         if CoreGrowingCollapse == 'CoreGrowing':
-#             #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#             seedparams=[0.40,0.01,10.,2.5,1.5] #Ok.
-#         if CoreGrowingCollapse == 'CoreCollapse':
-#             #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
-#             seedparams=[0.4,0.0,9.,2.5,4.3] #Ok.
-#     paramserrors=[0.1 for i in range(0,len(seedparams))]
+def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
+    print('Determine seed point:')
+    nwalkers=npoints #number of points from which maximum cross section is selected
+    #_____Seed parameters = rounded best fit parameters for CSWA6 NFW from previous runs_____ 
+    if parspace=='M200csigmavm':
+        if CoreGrowingCollapse == 'CoreGrowing':
+            #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+            seedparams=[0.4,0.0,14.,0.8,1.5,10.,3.] #Ok for all groups.
+        if CoreGrowingCollapse == 'CoreCollapse':
+            #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+            seedparams=[0.4,0.0,14.,0.8,4.3,10.,3.] #Ok
+    if parspace=='rho0sigma0sigmavm':
+        if CoreGrowingCollapse == 'CoreGrowing':
+            #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
+            seedparams=[0.40,0.01,10.,2.5,1.5] #Ok.
+        if CoreGrowingCollapse == 'CoreCollapse':
+            #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
+            seedparams=[0.4,0.0,9.,2.5,4.3] #Ok.
+    paramserrors=[0.1 for i in range(0,len(seedparams))]
     
-#     #_____CoreGrowingCollapse_____ 
-#     if CoreGrowingCollapse == 'CoreGrowing': #For core growing solutions start with a large cross section
-#         xsctnmin=15. #Dummy variable to start while loop
-#         while xsctnmin > 1.:
-#             chainsini=walkersini(seedparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             print(chainsini)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmin=min(xsctnvals)
-#             print('xsctnmin='+str(xsctnmin))
-#             if xsctnmin > 1.:
-#                 continue
-#             else:
-#                 iminmax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmin)))[0]
+    #_____CoreGrowingCollapse_____ 
+    if CoreGrowingCollapse == 'CoreGrowing': #For core growing solutions start with a large cross section
+        xsctnmin=15. #Dummy variable to start while loop
+        while xsctnmin > 1.:
+            chainsini=walkersini(seedparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+            print(chainsini)
+            xsctnvals=chainsini[:,-3]
+            xsctnmin=min(xsctnvals)
+            print('xsctnmin='+str(xsctnmin))
+            if xsctnmin > 1.:
+                continue
+            else:
+                iminmax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmin)))[0]
                     
-#     if CoreGrowingCollapse == 'CoreCollapse': #For core collapse solutions start with a large cross section
-#         xsctnmax=1. #Dummy variable to start while loop
-#         while xsctnmax < 15.:
-#             chainsini=walkersini(seedparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#             print(chainsini)
-#             xsctnvals=chainsini[:,-3]
-#             xsctnmax=max(xsctnvals)
-#             print('xsctnmax='+str(xsctnmax))
-#             if xsctnmax < 15.:
-#                 continue
-#             else:
-#                 iminmax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmax)))[0]
-#     initialblobs=chainsini[iminmax]
-#     return initialblobs
-
-# for galnum in range(0,10):
-# #for galnum in range(4,5):   
-#     for parspace in ['M200csigmavm','rho0sigma0sigmavm']:
-#     #for parspace in ['M200csigmavm']:
-#         #for DMprofile in ['NFW','Bl','Gn']: 
-#         for DMprofile in ['NFW']: 
-#             for CoreGrowingCollapse in ['CoreGrowing','CoreCollapse']:
-#             #for CoreGrowingCollapse in ['CoreGrowing']: 
-#                 for GradNoGrad in ['Grad','NoGrad']:
-#                 #for GradNoGrad in ['Grad']:
-#                     print(str(parspace)+', '+str(names[galnum])+', Sersic'+str(GradNoGrad)+', '+str(DMprofile)+', '+str(CoreGrowingCollapse)+', '+str(data)+':')
-#                     #_____Initial blobs_____ 
-#                     npoints=1
-#                     initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-#                     print(initialblobs)
-#                     header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10rho0start","log10sigma0start","DeltaU","xsctn","ChiSqTot","success"]]
-#                     header=np.array(list(itertools.chain.from_iterable(header)))
-#                     filename=str(names[galnum])+'_Sersic'+str(GradNoGrad)+'_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)
-#                     np.savetxt('Initialparams/Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblobs,header=str(header))
-#                     print('Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-#                     #_____Initial params_____ 
-#                     if parspace=='M200csigmavm':
-#                         initialparams=np.array([initialblobs[j] for j in [3,4,-11,-10,-7,-6,-5]])
-#                     if parspace=='rho0sigma0sigmavm':
-#                         initialparams=np.array([initialblobs[j] for j in [3,4,0,1,-5]])
-#                     initialxsctn=initialblobs[-3]
-#                     print('initialparams='+str(initialparams))
-#                     print('initialxsctn='+str(initialxsctn))
+    if CoreGrowingCollapse == 'CoreCollapse': #For core collapse solutions start with a large cross section
+        xsctnmax=1. #Dummy variable to start while loop
+        while xsctnmax < 15.:
+            chainsini=walkersini(seedparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+            print(chainsini)
+            xsctnvals=chainsini[:,-3]
+            xsctnmax=max(xsctnvals)
+            print('xsctnmax='+str(xsctnmax))
+            if xsctnmax < 15.:
+                continue
+            else:
+                iminmax=list(itertools.chain.from_iterable(np.argwhere(xsctnvals==xsctnmax)))[0]
+    initialblobs=chainsini[iminmax]
+    return initialblobs
 
 
 
@@ -1181,19 +998,22 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     #Number of free parameters:
     ndim=7 #=len(params)
     #_____Initial parameters_____
-    print('Load initial parameters:')
+    print('Generate initial parameters:')
     #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
     #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
     #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-    #npoints=1
-    #initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-    initialblobs=np.loadtxt('Initialparams/Initialblobs_'+str(parspace)+'_log10sigmavm_'+str(names[galnum])+'_Sersic'+str(GradNoGrad)+'_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'.dat')
+    npoints=1
+    initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+    np.savetxt(output_dir+'Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblobs,header=str(header))
+    print('Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
+    #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
     initialparams=np.array([initialblobs[j] for j in [3,4,-11,-10,-7,-6,-5]])
     initialxsctn=initialblobs[-3]
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
     paramserrors=[0.01 for i in range(0,len(initialparams))]
+    print('paramserrors='+str(paramserrors))
     #_____Starting points for walkers_____
     print('Determine starting points for walkers:')
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -1256,13 +1076,15 @@ def MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburni
     #Number of free parameters:
     ndim=5 #=len(params)
     #_____Initial parameters_____
-    print('Load initial parameters:')
-    #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+    print('Generate initial parameters:')
+    #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
     #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
     #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-    #npoints=1
-    #initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-    initialblobs=np.loadtxt('Initialparams/Initialblobs_'+str(parspace)+'_log10sigmavm_'+str(names[galnum])+'_Sersic'+str(GradNoGrad)+'_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'.dat')
+    npoints=1
+    initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+    np.savetxt(output_dir+'Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblobs,header=str(header))
+    print('Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
+    #params=[log10Y,beta,log10rho0,log10sigma0,log10sigmavm]
     initialparams=np.array([initialblobs[j] for j in [3,4,0,1,-5]])
     initialxsctn=initialblobs[-3]
     print('initialparams='+str(initialparams))
@@ -1348,6 +1170,4 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
-
-
 
