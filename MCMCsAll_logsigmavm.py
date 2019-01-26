@@ -1193,7 +1193,7 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
-    paramserrors=[0.1 for i in range(0,len(initialparams))]
+    paramserrors=[0.01 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     print('Determine starting points for walkers:')
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -1268,7 +1268,7 @@ def MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburni
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
-    paramserrors=[0.1 for i in range(0,len(initialparams))]
+    paramserrors=[0.01 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     #Starting point p0 for each of the walkers:
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
