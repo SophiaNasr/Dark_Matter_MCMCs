@@ -23,6 +23,12 @@
 
 
 # %load MCMCsAll_logsigmavm.py
+
+
+# In[ ]:
+
+
+# %load MCMCsAll_logsigmavm.py
 import os,sys
 import numpy as np
 import pandas as pd #for loading csv Excel files
@@ -173,15 +179,15 @@ groupnames=pd.read_csv('ObservationData/Group observation data DelUps015.csv').v
 
 #With M/L gradient:
 rhoSersicGradTab=[np.loadtxt('ObservationData/SersicDensityProfile_DelUps015_'+groupnames[i]+'.dat') for i in range(0,len(groupnames))]
-rhoSersicGradInt=[interp1d(rhoSersicGradTab[i][:,0],rhoSersicGradTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(groupnames))]
+rhoSersicGradInt=[interp1d(rhoSersicGradTab[i][:,0],rhoSersicGradTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(groupnames))]
 MSersicGradTab=[np.loadtxt('ObservationData/SersicEnclMass_DelUps015_'+groupnames[i]+'.dat') for i in range(0,len(groupnames))]
-MSersicGradInt=[interp1d(MSersicGradTab[i][:,0],MSersicGradTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(groupnames))]
+MSersicGradInt=[interp1d(MSersicGradTab[i][:,0],MSersicGradTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(groupnames))]
 
 #Without M/L gradient (needed to compute Sigmastars_sigmaLOS2):
 rhoSersicNoGradTab=[np.loadtxt('ObservationData/SersicDensityProfile_DelUps0_'+groupnames[i]+'.dat') for i in range(0,len(groupnames))]
-rhoSersicNoGradInt=[interp1d(rhoSersicNoGradTab[i][:,0],rhoSersicNoGradTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(groupnames))]
+rhoSersicNoGradInt=[interp1d(rhoSersicNoGradTab[i][:,0],rhoSersicNoGradTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(groupnames))]
 MSersicNoGradTab=[np.loadtxt('ObservationData/SersicEnclMass_DelUps0_'+groupnames[i]+'.dat') for i in range(0,len(groupnames))]
-MSersicNoGradInt=[interp1d(MSersicNoGradTab[i][:,0],MSersicNoGradTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(groupnames))]
+MSersicNoGradInt=[interp1d(MSersicNoGradTab[i][:,0],MSersicNoGradTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(groupnames))]
 
 rvals=np.array([MSersicGradTab[0][:,0][i] for i in range(1,len(MSersicGradTab[0][:,0])-1)]) #Range of r such that FindRoot[...] works
 [rmin,rmax]=[rvals[0],rvals[-1]]  
@@ -216,10 +222,10 @@ def Mstars(galnum,r):
 
 simsnames=pd.read_csv('ObservationData/Sim observation data.csv').values[:,0]
 rhostarsTab=np.array([[[r,rhostars(i,r)] for r in rvals] for i in range(0,len(simsnames))])
-rhostarsInt=[interp1d(rhostarsTab[i][:,0],rhostarsTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(simsnames))]
+rhostarsInt=[interp1d(rhostarsTab[i][:,0],rhostarsTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(simsnames))]
 
 MstarsTab=np.array([[[r,Mstars(i,r)] for r in rvals] for i in range(0,len(simsnames))])
-MstarsInt=[interp1d(MstarsTab[i][:,0],MstarsTab[i][:,1], kind='cubic', fill_value='extrapolate') for i in range(0,len(simsnames))]
+MstarsInt=[interp1d(MstarsTab[i][:,0],MstarsTab[i][:,1], kind='linear', fill_value='extrapolate') for i in range(0,len(simsnames))]
 
 
 # if data == 'groupsdata':
@@ -319,8 +325,8 @@ def IsothermalProfileInt(GradNoGrad,galnum,Y,rho0,sigma0):
     rhoMini = [rho0,(4.*np.pi)/3.*rho0*rmin**3.]
     #_____Solve ODE_____
     sol = odeint(rhoMiso,rhoMini,rvals) #sol=[rhoiso(R),Miso(R) for R in rvals]
-    rhoiso=interp1d(rvals,sol[:,0], kind='cubic',fill_value='extrapolate')
-    Miso=interp1d(rvals,sol[:,1], kind='cubic',fill_value='extrapolate')
+    rhoiso=interp1d(rvals,sol[:,0], kind='linear',fill_value='extrapolate')
+    Miso=interp1d(rvals,sol[:,1], kind='linear',fill_value='extrapolate')
     return [rhoiso,Miso]
 
 
@@ -341,10 +347,10 @@ def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,
     
     #_____AC NFW profile_____
     rhoACNFWvals=np.array([ACNFWProfile(GradNoGrad,DMprofile,galnum,Y,M200,c,R)[0] for R in Rvals])
-    rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='cubic',fill_value='extrapolate')
+    rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='linear',fill_value='extrapolate')
     
     MACNFWvals=np.array([ACNFWProfile(GradNoGrad,DMprofile,galnum,Y,M200,c,R)[1] for R in Rvals])
-    MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
+    MACNFWInt=interp1d(Rvals,MACNFWvals,kind='linear',fill_value='extrapolate')
 
     # dummy default values
     MtotACSIDMInt=1.
@@ -355,7 +361,7 @@ def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,
 
     #_____Find r1_____
     #Inverse function
-    R_rhoACNFWInt=interp1d(rhoACNFWvals,Rvals,kind='cubic',fill_value='extrapolate')
+    R_rhoACNFWInt=interp1d(rhoACNFWvals,Rvals,kind='linear',fill_value='extrapolate')
     rhoACNFWr1=1./(MSun_in_g*sigmavm*km_in_kpc*cm_in_kpc**2.*tage)
     r1=R_rhoACNFWInt(rhoACNFWr1)
     
@@ -402,9 +408,9 @@ def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,
                     #Mdm = Miso(rho0,sigma0,R)
                     Mdm = sol[1](R)
                 return Mdm
-            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(R)+Mb(R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='linear', fill_value='extrapolate')
             #_____CoreGrowingCollapse_____
             def DeltaUintegrand(R):
                 integrand = ((MtotACSIDMInt(R))**2.-(MtotACNFWInt(R))**2.)/R**2.
@@ -431,7 +437,7 @@ def Ratio(x1):
     return (1./x1**2.)*(1.+x1)**2*(np.log(1.+x1)-x1/(x1+1.))
 Ratiovals = np.array(list(itertools.chain.from_iterable([[0.5],[Ratio(x1) for x1 in x1vals]])))
 x1vals = np.array(list(itertools.chain.from_iterable([[0.],[x1 for x1 in x1vals]])))
-x1Int=interp1d(Ratiovals,x1vals, kind='cubic', fill_value='extrapolate')
+x1Int=interp1d(Ratiovals,x1vals, kind='linear', fill_value='extrapolate')
 def X1(ratio):
     return x1Int(ratio)
 
@@ -466,10 +472,10 @@ def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     #_____Isothermal profile_____
     sol=IsothermalProfileInt(GradNoGrad,galnum,Y,rho0,sigma0)
     def rhoiso(R):
-        #return interp1d(rvals,sol[:,0], kind='cubic', fill_value='extrapolate')(R)
+        #return interp1d(rvals,sol[:,0], kind='linear', fill_value='extrapolate')(R)
         return sol[0](R)
     def Miso(R):
-        #return interp1d(rvals,sol[:,1], kind='cubic', fill_value='extrapolate')(R)
+        #return interp1d(rvals,sol[:,1], kind='linear', fill_value='extrapolate')(R)
         return sol[1](R)
     
     
@@ -522,11 +528,11 @@ def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollap
             #_____AC NFW profile_____
             #rhoACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[0] for R in Rvals])
             rhoACNFWvals=np.array([rhoACNFW(M200,c,R) for R in Rvals])
-            rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='cubic',fill_value='extrapolate')
+            rhoACNFWInt=interp1d(Rvals,rhoACNFWvals,kind='linear',fill_value='extrapolate')
     
             #MACNFWvals=np.array([ACNFWProfile(DMprofile,galnum,Y,M200,c,R)[1] for R in Rvals])
             MACNFWvals=np.array([MACNFW(M200,c,R) for R in Rvals])
-            MACNFWInt=interp1d(Rvals,MACNFWvals,kind='cubic',fill_value='extrapolate')
+            MACNFWInt=interp1d(Rvals,MACNFWvals,kind='linear',fill_value='extrapolate')
             #_____AC SIDM profile_____
             #def rhoACSIDM(M200,c,r1,R):
             def rhoACSIDM(r1,R):
@@ -544,11 +550,11 @@ def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollap
                 else: 
                     Mdm = Miso(R)
                 return Mdm 
-            #MtotACSIDMInt=interp1d(Rvals,[MACSIDM(M200,c,r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(r1,R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            #rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200,c,r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(r1,R) for R in Rvals], kind='cubic', fill_value='extrapolate')
-            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='cubic', fill_value='extrapolate')
+            #MtotACSIDMInt=interp1d(Rvals,[MACSIDM(M200,c,r1,R)+Mb(R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            MtotACSIDMInt=interp1d(Rvals,[MACSIDM(r1,R)+Mb(R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            #rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(M200,c,r1,R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            rhoACSIDMInt=interp1d(Rvals,[rhoACSIDM(r1,R) for R in Rvals], kind='linear', fill_value='extrapolate')
+            MtotACNFWInt=interp1d(Rvals,[MACNFWInt(R)+Mb(R) for R in Rvals], kind='linear', fill_value='extrapolate')
             #_____CoreGrowingCollapse_____
             def DeltaUintegrand(R):
                 integrand = ((MtotACSIDMInt(R))**2.-(MtotACNFWInt(R))**2.)/R**2.
@@ -644,7 +650,7 @@ def f_beta(beta):
             f=fbeta(beta,w)
         return f
     f_betavals=list(np.float_([fw(w) for w in wvals]))
-    f_betaInt=interp1d(wvals,f_betavals, kind='cubic')
+    f_betaInt=interp1d(wvals,f_betavals, kind='linear')
     return f_betaInt
 
 def Sigmastars_sigmaLOS2(galnum,MtotInt,beta):
@@ -672,7 +678,7 @@ def SeeingBinned(galnum,func):
     bins=binvals[galnum]
     width=slitwidthvals[galnum]
     sigmaPSF=sigmaPSFvals[galnum]
-    funcInt=interp1d(func[:,0],func[:,1], kind='cubic')
+    funcInt=interp1d(func[:,0],func[:,1], kind='linear')
     def integrand(r1,r2):
         return (r2/sigmaPSF**2.)*sp.iv(0,(r1*r2)/sigmaPSF**2.)*np.exp(-((r1**2.+r2**2.)/(2.*sigmaPSF**2.)))*funcInt(r2)
     def Seeing_bin(binnum):
@@ -709,7 +715,7 @@ def SeeingBinned(galnum,func):
             integral=np.sum([integrand(r, rvals[ip])*Deltarvals[ip] for ip in range(0,len(rvals))])
             return integral
         funcSeeingtab=np.array([[r,integralRpr(r)] for r in np.arange(Rmin,Rmax+DeltaR,DeltaR)])
-        funcSeeing=interp1d(funcSeeingtab[:,0],funcSeeingtab[:,1], kind='cubic', fill_value='extrapolate')
+        funcSeeing=interp1d(funcSeeingtab[:,0],funcSeeingtab[:,1], kind='linear', fill_value='extrapolate')
         #fill_value='extrapolate': interpolate such that Rmin and Rmax are included in interpolation range
         #_____Binning:_____
         funcSeeing_bin=np.sum([[Deltax*Deltay*funcSeeing(Rvals[i][j]) for j in range(0,int(Ny))] for i in range(0,int(Nx))])/Abin
@@ -1187,7 +1193,7 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
-    paramserrors=[0.01 for i in range(0,len(initialparams))]
+    paramserrors=[0.1 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     print('Determine starting points for walkers:')
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -1262,7 +1268,7 @@ def MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburni
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
-    paramserrors=[0.01 for i in range(0,len(initialparams))]
+    paramserrors=[0.1 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     #Starting point p0 for each of the walkers:
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -1342,5 +1348,6 @@ end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
 print("Successfully finished running.")
+
 
 
