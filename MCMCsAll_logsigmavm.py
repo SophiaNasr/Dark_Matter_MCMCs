@@ -406,7 +406,7 @@ def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,
     vel=(4./np.sqrt(np.pi))*sigma0
     xsctn=sigmavm/vel
 
-    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),np.log10(rho0start),np.log10(sigma0start),r1,sigmavm,xsctn,r200_val,vel,DeltaU,success]
+    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(rho0),np.log10(sigma0),r1,xsctn,r200_val,vel,DeltaU,success]
 
 
 #_____x1=r1/rs_____
@@ -546,7 +546,7 @@ def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollap
                 success=False
         except:
             success=False
-    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(M200),np.log10(c),np.log10(rho0),np.log10(sigma0),r1,sigmavm,r200_val,DeltaU,success] 
+    return [MtotACSIDMInt,rhoACSIDMInt,np.log10(M200),np.log10(c),r1,r200_val,DeltaU,success] 
 
 
 # Mean convergence kappabar
@@ -778,7 +778,7 @@ def lnprobM200csigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse):
        
     #_____ACSIDM profile_____
     if success:
-        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,log10rho0start,log10sigma0start,r1,sigmavm,xsctn,r200_val,vel,DeltaU,success]=ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success)
+        [MtotACSIDMInt,rhoACSIDMInt,log10rho0,log10sigma0,r1,xsctn,r200_val,vel,DeltaU,success]=ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success)
         #if xsctn < 0. or xsctn > 10.:
         #    success=False
     if success:
@@ -864,7 +864,7 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     #    success=False
     if success: 
         #_____ACSIDM profile_____
-        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,log10rho0,log10sigma0,r1,sigmavm,r200_val,DeltaU,success]=ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
+        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,r1,r200_val,DeltaU,success]=ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
         #_____\chi^2 lensing_____
         if success:
             kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
