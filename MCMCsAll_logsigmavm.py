@@ -1,6 +1,12 @@
 
 # coding: utf-8
 
+# In[11]:
+
+
+# %load MCMCsAll_logsigmavm.py
+
+
 # In[ ]:
 
 
@@ -308,7 +314,7 @@ def IsothermalProfileInt(GradNoGrad,galnum,Y,rho0,sigma0):
     return [rhoiso,Miso]
 
 
-def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success):
+def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start):
     #_____Group properties_____
     z = zvals[galnum]
     if data == 'groupsdata':
@@ -333,7 +339,14 @@ def ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,
     # dummy default values
     MtotACSIDMInt=1.
     rhoACSIDMInt=1.
-    DeltaU=0.
+    rho0=1.
+    sigma0=1.
+    r1=1.
+    xsctn=1.
+    r200_val=1.
+    vel=1.
+    DeltaU=0
+    success=True
 
     r200_val=r200(z,M200,c)
 
@@ -420,7 +433,9 @@ def X1(ratio):
     return x1Int(ratio)
 
 
-def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success):
+def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm):
+    vel=(4./np.sqrt(np.pi))*sigma0
+    xsctn=sigmavm/vel
     #_____Group properties_____
     z = zvals[galnum]
     if data == 'groupsdata':
@@ -444,8 +459,12 @@ def ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     # dummy default values
     rhoACSIDMInt=1.
     MtotACSIDMInt=1.
-    DeltaU=0.
+    M200=1.
+    c=1.
+    r1=1.
     r200_val=1.
+    DeltaU=0.
+    success=True
     
     #_____Isothermal profile_____
     sol=IsothermalProfileInt(GradNoGrad,galnum,Y,rho0,sigma0)
@@ -727,7 +746,6 @@ def sigmaLOS_seeing_binned(galnum,MtotInt,beta):
 #def lnprob(params,galnum,DMprofile,CoreGrowingCollapse):
 def lnprobM200csigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse):
     [log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]=params
-    success=True
     #_____Free parameters_____ 
     Y=10.**log10Y
     M200=10.**log10M200
@@ -744,29 +762,26 @@ def lnprobM200csigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse):
     sigmaLOSobs=sigmaLOSobsvals[galnum]
     sigmaLOSerror=sigmaLOSerrorvals[galnum]
     log10YSPS=log10YSPSvals[galnum]
-
+    
     # dummy definitions
-    rho0=1
-    sigma0=1.
-    vel=1.
-    sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
-    log10rho0=1.
-    log10rho0start=log10rho0
-    log10sigma0=np.log10(sigma0)
-    log10sigma0start=log10sigma0
+    #rho0=1 #in ACSIDMProfile.
+    #sigma0=1.
+    log10rho0=0.
+    log10sigma0=0.
     xsctn=1.
     prob=0.
     ChiSqDisp=np.inf
     ChiSqLensing=np.inf
     ChiSqMass=np.inf
+    sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
     kappabar=1.
     r1=1.
     r200_val=1.
-    alpha=1.
-
+    vel=1.
     DeltaU=0.
     ChiSqTot=np.inf
     lnprob=-np.inf
+    success=True
     
     #_____Priors/physical values for free parameters_____     
     if abs(log10Y-log10YSPS) > 0.4:
@@ -778,7 +793,7 @@ def lnprobM200csigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse):
        
     #_____ACSIDM profile_____
     if success:
-        [MtotACSIDMInt,rhoACSIDMInt,log10rho0,log10sigma0,r1,xsctn,r200_val,vel,DeltaU,success]=ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start,rho0,sigma0,success)
+        [MtotACSIDMInt,rhoACSIDMInt,log10rho0,log10sigma0,r1,xsctn,r200_val,vel,DeltaU,success]=ACSIDMProfileM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,M200,c,sigmavm,rho0start,sigma0start)
         #if xsctn < 0. or xsctn > 10.:
         #    success=False
     if success:
@@ -830,28 +845,30 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     sigmaLOSerror=sigmaLOSerrorvals[galnum]
     log10YSPS=log10YSPSvals[galnum]
 
-    # determine cross-section
-    vel=(4./np.sqrt(np.pi))*sigma0
-    xsctn=sigmavm/vel
-
-    # dummy values
-    log10M200=0.
-    log10c=0.
-    M200=1.
-    c=1.
-    sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
+    ## determine cross-section
+    #vel=(4./np.sqrt(np.pi))*sigma0
+    #xsctn=sigmavm/vel
+    
+    # dummy definitions
+    xsctn=1.
     prob=0.
     ChiSqDisp=np.inf
     ChiSqLensing=np.inf
     ChiSqMass=np.inf
+    sigmaLOS=[1 for x in range(len(sigmaLOSobs))]
     kappabar=1.
     r1=1.
     r200_val=1.
-    
+    #M200=1. #in ACSIDMProfile
+    #c=1.
+    log10M200=0.
+    log10c=0.
+    vel=1.
+    log10rho0start=log10rho0
+    log10sigma0start=log10sigma0
     DeltaU=0.
     ChiSqTot=np.inf
     lnprob=-np.inf
-
     
     #_____Priors/physical values for free parameters_____     
     if abs(log10Y-log10YSPS) > 0.4:
@@ -864,7 +881,7 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     #    success=False
     if success: 
         #_____ACSIDM profile_____
-        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,r1,r200_val,DeltaU,success]=ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm,M200,c,xsctn,r1,success)
+        [MtotACSIDMInt,rhoACSIDMInt,log10M200,log10c,r1,r200_val,DeltaU,success]=ACSIDMProfilerho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,Y,rho0,sigma0,sigmavm)
         #_____\chi^2 lensing_____
         if success:
             kappabar = kappabartot(galnum,Y,rhoACSIDMInt)
