@@ -846,11 +846,11 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     log10YSPS=log10YSPSvals[galnum]
 
     ## determine cross-section
-    #vel=(4./np.sqrt(np.pi))*sigma0
-    #xsctn=sigmavm/vel
+    vel=(4./np.sqrt(np.pi))*sigma0
+    xsctn=sigmavm/vel
     
     # dummy definitions
-    xsctn=1.
+    #xsctn=1.
     prob=0.
     ChiSqDisp=np.inf
     ChiSqLensing=np.inf
