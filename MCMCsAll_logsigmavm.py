@@ -850,6 +850,7 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     xsctn=sigmavm/vel
     
     # dummy definitions
+    #vel=1.
     #xsctn=1.
     prob=0.
     ChiSqDisp=np.inf
@@ -863,7 +864,6 @@ def lnprobrho0sigma0sigmavm(params,GradNoGrad,galnum,DMprofile,CoreGrowingCollap
     #c=1.
     log10M200=0.
     log10c=0.
-    vel=1.
     log10rho0start=log10rho0
     log10sigma0start=log10sigma0
     DeltaU=0.
