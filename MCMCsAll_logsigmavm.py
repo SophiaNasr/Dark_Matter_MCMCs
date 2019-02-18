@@ -1,13 +1,7 @@
 
 # coding: utf-8
 
-# In[11]:
-
-
-# %load MCMCsAll_logsigmavm.py
-
-
-# In[ ]:
+# In[1]:
 
 
 # %load MCMCsAll_logsigmavm.py
@@ -30,6 +24,9 @@ import time #for printing out timing
 import emcee #for running MCMCs
 import argparse
 from multiprocessing import Pool
+
+
+# In[21]:
 
 
 start = time.time()
@@ -262,7 +259,7 @@ def ACNFWProfile(GradNoGrad,DMprofile,galnum,Y,M200,c,r): #DMprofile = NFW, Bl, 
     
     if DMprofile == 'NFW': [A,w]=[1.,0.]
     if DMprofile == 'Bl': [A,w]=[1.,1.]
-    if DMprofile == 'Gn': [A,w]=[0.8,0.85]
+    if DMprofile == 'Gn': [A,w]=[0.85,0.8]
     def rival(R):
         def f(ri):
             def bar(R):
@@ -1002,6 +999,8 @@ def Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace):
     return initialblobs
 
 
+# In[40]:
+
 
 ## Module to run MCMCs
 
@@ -1009,66 +1008,83 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     #_____MCMC properties_____
     header=[["log10rho0","log10sigma0","np.log10(xsctn)","log10Y","beta","prob","ChiSqDisp","ChiSqLensing","ChiSqMass"],["sigmaLOS"+str(i) for i in range(len(sigmaLOSobsvals[galnum]))] ,["kappabar","r1","r200","log10M200","log10c","vel","sigmavm","log10sigmavm","log10rho0start","log10sigma0start","DeltaU","xsctn","ChiSqTot","success"]]
     header=np.array(list(itertools.chain.from_iterable(header)))
-    chainlength = nwalkers*nsamples_finalrun
-    filename=str(names[galnum])+'_Sersic'+str(GradNoGrad)+'_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'_chainlength'+str(chainlength)+'_nwalkers'+str(nwalkers)+'_nsamples'+str(nsamples_finalrun)
+    filename=str(names[galnum])+'_Sersic'+str(GradNoGrad)+'_'+str(DMprofile)+'_'+str(CoreGrowingCollapse)+'_'+str(data)+'_nwalkers'+str(nwalkers)
     #_____Set up the MCMC_____
     #Number of free parameters:
     ndim=7 #=len(params)
-    #_____Initial parameters_____
-    print('Generate initial parameters:')
-    #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-    #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
-    #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-    npoints=1
-    initialblobs=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-    np.savetxt(output_dir+'Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblobs,header=str(header))
-    print('Initialblobs_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-    #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-    initialparams=np.array([initialblobs[j] for j in [3,4,-11,-10,-7,-6,-5]])
-    initialxsctn=initialblobs[-3]
-    print('initialparams='+str(initialparams))
-    print('initialxsctn='+str(initialxsctn))
-    #_____Parameter errors_____
-    paramserrors=[0.01 for i in range(0,len(initialparams))]
-    print('paramserrors='+str(paramserrors))
-    #_____Starting points for walkers_____
-    print('Determine starting points for walkers:')
+    #_____Generate or load starting points for walkers_____
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
     #p0=np.array([initialparams+paramserrors*np.random.randn(ndim) for i in range(nwalkers)])
     starting_point_start = time.time()
-    chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+    filestartingpoints='Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
+    filenewstartingpoints='Newstartingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
+    if os.path.isfile(output_dir+filestartingpoints) or os.path.isfile(filenewstartingpoints):
+        #_____Load starting points for walkers_____
+        print('Load starting points for walkers:')
+        chainsini=np.loadtxt(output_dir+filestartingpoints)
+    else:
+        #_____Generate starting points for walkers_____
+        print('Generate starting points for walkers:')
+        #Initial parameters_____
+        print('Generate initial parameters:')
+        #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+        #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
+        #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
+        npoints=1
+        initialblob=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+        np.savetxt(output_dir+'Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblob,header=str(header))
+        print('Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
+        #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+        initialparams=np.array([initialblob[j] for j in [3,4,-11,-10,-7,-6,-5]])
+        initialxsctn=initialblob[-3]
+        print('initialparams='+str(initialparams))
+        print('initialxsctn='+str(initialxsctn))
+        #Parameter errors_____
+        paramserrors=[0.1 for i in range(0,len(initialparams))]
+        print('paramserrors='+str(paramserrors))
+        #Starting points for walkers_____
+        print('Determine starting points for walkers:')
+        chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
     print(chainsini)
     formatter=['%.18e' for x in range(len(header)-1)]
     formatter.append('%d')
-    np.savetxt(output_dir+'Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',chainsini, header=str(header),fmt=formatter)
-    print('Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
+    np.savetxt(output_dir+filestartingpoints,chainsini,header=str(header),fmt=formatter)
+    print(filestartingpoints+' exported.')
     p0=np.array([[chainsini[i][j] for j in [3,4,-11,-10,-7,-6,-5]] for i in range(nwalkers)])
-    print(p0)
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
     print('Time to calculate starting points for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(spoint_time))    
     #_____MCMCs_____
     parallelstart = time.time()
+    burninchainlength = nwalkers*nsamples_burnin
+    finalchainlength = nwalkers*nsamples_finalrun
+    chainname='burninsamples'+str(nsamples_burnin)+'burninchainlength'+str(burninchainlength)+'_finalsamples'+str(nsamples_finalrun)+'_finalchainlength'+str(finalchainlength)
     for i in range(nburnins+1):
         if i==0:
             paramsini=p0    
         if i in range(nburnins): #Burn-in runs 
             nsamples=nsamples_burnin #chainlength = nwalkers*nsamples
-            runname='run'+str(i+1)
+            runname=chainname+'run'+str(i+1)
         else: #MCMC production run
             nsamples=nsamples_finalrun #chainlength = nwalkers*nsamples
-            runname='finalrun'
+            runname=chainname+'finalrun'
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobM200csigmavm, args=(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse), pool=pool)
+            print('paramsini:')
+            print(paramsini)
             paramsini_tmp,lnprobval,state,blobstmp=sampler.run_mcmc(paramsini,nsamples)
             paramsini=paramsini_tmp
             blobs=sampler.get_blobs(flat=True)
+            #New starting points:
+            chainsini=blobs[::-1][:nwalkers:][::-1]
             accfrac=np.mean(sampler.acceptance_fraction)
             sampler.reset()
         print('MCMC '+runname+' completed. Acceptance fraction: '+str(accfrac)) 
         #Save results on computer:
         np.savetxt(output_dir+'Chains_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat',blobs, header=str(header),fmt=formatter)
         print('Chains_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat exported.')
+        np.savetxt(output_dir+filenewstartingpoints,chainsini,header=str(header),fmt=formatter)
+        print(filenewstartingpoints+' exported.')
     parallel_end = time.time()
     tparallel=parallel_end - parallelstart
     print('tparallel for galnum '+str(galnum)+' and profile '+str(DMprofile)+'='+str(tparallel))
@@ -1081,6 +1097,9 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     np.savetxt(output_dir+'Bestfitparams_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat',bestfit)
     print('Bestfitparams_'+parameter_space+'_log10sigmavm_'+filename+'_'+runname+'.dat exported.')
     return 'Done.'
+
+
+# In[ ]:
 
 
 def MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parspace): #nwalkers should be > 100.
@@ -1107,7 +1126,7 @@ def MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburni
     print('initialparams='+str(initialparams))
     print('initialxsctn='+str(initialxsctn))
     #_____Parameter errors_____
-    paramserrors=[0.01 for i in range(0,len(initialparams))]
+    paramserrors=[0.1 for i in range(0,len(initialparams))]
     #_____Starting points for walkers_____
     #Starting point p0 for each of the walkers:
     #Number of walkers must be the same for burn in and finalrun because of the set up of the initial conditions:
@@ -1183,6 +1202,7 @@ for parameter_space in parameterspaceList:
                         print(MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
                     elif parameter_space=='rho0sigma0sigmavm':
                         print(MCMCrho0sigma0sigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nwalkers,nsamples_burnin,nsamples_finalrun,parameter_space))
+
 end = time.time()
 ttot=end - start
 print('ttot='+str(ttot))
