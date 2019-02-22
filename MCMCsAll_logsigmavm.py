@@ -1018,33 +1018,38 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     starting_point_start = time.time()
     filestartingpoints='Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
     filenewstartingpoints='Newstartingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
-    if os.path.isfile(output_dir+filestartingpoints) or os.path.isfile(filenewstartingpoints):
+    if os.path.isfile(output_dir+filenewstartingpoints):
         #_____Load starting points for walkers_____
         print('Load starting points for walkers:')
-        chainsini=np.loadtxt(output_dir+filestartingpoints)
+        chainsini=np.loadtxt(output_dir+filenewstartingpoints)
     else:
-        #_____Generate starting points for walkers_____
-        print('Generate starting points for walkers:')
-        #Initial parameters_____
-        print('Generate initial parameters:')
-        #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-        #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
-        #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
-        npoints=1
-        initialblob=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-        np.savetxt(output_dir+'Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblob,header=str(header))
-        print('Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
-        #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
-        initialparams=np.array([initialblob[j] for j in [3,4,-11,-10,-7,-6,-5]])
-        initialxsctn=initialblob[-3]
-        print('initialparams='+str(initialparams))
-        print('initialxsctn='+str(initialxsctn))
-        #Parameter errors_____
-        paramserrors=[0.1 for i in range(0,len(initialparams))]
-        print('paramserrors='+str(paramserrors))
-        #Starting points for walkers_____
-        print('Determine starting points for walkers:')
-        chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+        if os.path.isfile(output_dir+filestartingpoints):
+            #_____Load starting points for walkers_____
+            print('Load starting points for walkers:')
+            chainsini=np.loadtxt(output_dir+filestartingpoints)
+        else:
+            #_____Generate starting points for walkers_____
+            print('Generate starting points for walkers:')
+            #Initial parameters_____
+            print('Generate initial parameters:')
+            #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+            #initialparams=[0.3222192947339193, 0.0, 14.141639613890037, 0.95018288373578297, np.log10(2094.2717341292714),np.log10(10**7.5),np.log10(580.)]
+            #paramserrors=np.array([0.1,0.3,2.,0.5,np.log10(50.),1.2,0.25])
+            npoints=1
+            initialblob=Findseed(npoints,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
+            np.savetxt(output_dir+'Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat',initialblob,header=str(header))
+            print('Initialblob_'+str(parspace)+'_log10sigmavm_'+filename+'.dat exported.')
+            #params=[log10Y,beta,log10M200,log10c,log10sigmavm,log10rho0start,log10sigma0start]
+            initialparams=np.array([initialblob[j] for j in [3,4,-11,-10,-7,-6,-5]])
+            initialxsctn=initialblob[-3]
+            print('initialparams='+str(initialparams))
+            print('initialxsctn='+str(initialxsctn))
+            #Parameter errors_____
+            paramserrors=[0.1 for i in range(0,len(initialparams))]
+            print('paramserrors='+str(paramserrors))
+            #Starting points for walkers_____
+            print('Determine starting points for walkers:')
+            chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
     print(chainsini)
     formatter=['%.18e' for x in range(len(header)-1)]
     formatter.append('%d')
@@ -1058,7 +1063,7 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     parallelstart = time.time()
     burninchainlength = nwalkers*nsamples_burnin
     finalchainlength = nwalkers*nsamples_finalrun
-    chainname='burninsamples'+str(nsamples_burnin)+'burninchainlength'+str(burninchainlength)+'_finalsamples'+str(nsamples_finalrun)+'_finalchainlength'+str(finalchainlength)
+    chainname='burninsamples'+str(nsamples_burnin)+'_burninchainlength'+str(burninchainlength)+'_finalsamples'+str(nsamples_finalrun)+'_finalchainlength'+str(finalchainlength)+'_'
     for i in range(nburnins+1):
         if i==0:
             paramsini=p0    
