@@ -1019,8 +1019,8 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     filestartingpoints='Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
     filenewstartingpoints='Newstartingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
     if os.path.isfile(output_dir+filenewstartingpoints):
-        #_____Load starting points for walkers_____
-        print('Load starting points for walkers:')
+        #_____Load latest starting points for walkers_____
+        print('Load latest starting points for walkers:')
         chainsini=np.loadtxt(output_dir+filenewstartingpoints)
     else:
         if os.path.isfile(output_dir+filestartingpoints):
