@@ -1055,9 +1055,9 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
             #Starting points for walkers_____
             print('Determine starting points for walkers:')
             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-            print(chainsini)
-            np.savetxt(output_dir+filestartingpoints,chainsini,header=str(header),fmt=formatter)
-            print(filestartingpoints+' exported.')
+        print(chainsini)
+        np.savetxt(output_dir+filestartingpoints,chainsini,header=str(header),fmt=formatter)
+        print(filestartingpoints+' exported.')
     p0=np.array([[chainsini[i][j] for j in [3,4,-11,-10,-7,-6,-5]] for i in range(nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
