@@ -1018,10 +1018,15 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
     starting_point_start = time.time()
     filestartingpoints='Startingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
     filenewstartingpoints='Newstartingpointswalkers_'+str(parspace)+'_log10sigmavm_'+filename+'.dat'
+    formatter=['%.18e' for x in range(len(header)-1)]
+    formatter.append('%d')
     if os.path.isfile(output_dir+filenewstartingpoints):
         #_____Load latest starting points for walkers_____
         print('Load latest starting points for walkers:')
         chainsini=np.loadtxt(output_dir+filenewstartingpoints)
+        print(chainsini)
+        np.savetxt(output_dir+filenewstartingpoints,chainsini,header=str(header),fmt=formatter)
+        print(filenewstartingpoints+' exported.')
     else:
         if os.path.isfile(output_dir+filestartingpoints):
             #_____Load starting points for walkers_____
@@ -1050,11 +1055,9 @@ def MCMCM200csigmavm(GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,nburnins,nw
             #Starting points for walkers_____
             print('Determine starting points for walkers:')
             chainsini=walkersini(initialparams,paramserrors,nwalkers,GradNoGrad,galnum,DMprofile,CoreGrowingCollapse,parspace)
-    print(chainsini)
-    formatter=['%.18e' for x in range(len(header)-1)]
-    formatter.append('%d')
-    np.savetxt(output_dir+filestartingpoints,chainsini,header=str(header),fmt=formatter)
-    print(filestartingpoints+' exported.')
+            print(chainsini)
+            np.savetxt(output_dir+filestartingpoints,chainsini,header=str(header),fmt=formatter)
+            print(filestartingpoints+' exported.')
     p0=np.array([[chainsini[i][j] for j in [3,4,-11,-10,-7,-6,-5]] for i in range(nwalkers)])
     starting_point_end = time.time()
     spoint_time=starting_point_end-starting_point_start
